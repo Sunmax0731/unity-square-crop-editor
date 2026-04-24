@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Text;
 using Sunmax0731.SquareCropEditor.Editor.Export;
 using Sunmax0731.SquareCropEditor.Models;
 using Sunmax0731.SquareCropEditor.Services;
@@ -366,6 +367,12 @@ namespace Sunmax0731.SquareCropEditor.Editor.Windows
 
         private void ExportPng()
         {
+            if (!ConfirmExport())
+            {
+                SetStatus("Export canceled.", MessageType.Info);
+                return;
+            }
+
             var readable = TextureReadbackService.GetReadableTexture(_sourceTexture);
             if (!readable.Success)
             {
@@ -405,6 +412,32 @@ namespace Sunmax0731.SquareCropEditor.Editor.Windows
             {
                 TextureReadbackService.DestroyIfOwned(readable);
             }
+        }
+
+        private bool ConfirmExport()
+        {
+            var outputSize = AspectOutputPlanner.CalculateOutputSize(
+                _settings.OutputSize,
+                GetAspectRatio(_outputPreset, _customOutputWidth, _customOutputHeight));
+            var outputPath = ResolveOutputPathForDisplay(_settings.OutputFolder, _settings.OutputFileName);
+            var message = new StringBuilder()
+                .AppendLine($"Output: {outputSize.Width} x {outputSize.Height}")
+                .AppendLine($"Selection: {_selection.X}, {_selection.Y}, {_selection.Width} x {_selection.Height}")
+                .AppendLine($"Mapping: {_settings.MappingMode}")
+                .AppendLine($"Conflict: {_settings.ConflictBehavior}")
+                .AppendLine()
+                .AppendLine(outputPath)
+                .ToString();
+
+            return EditorUtility.DisplayDialog("Confirm PNG Export", message, "Export", "Cancel");
+        }
+
+        private static string ResolveOutputPathForDisplay(string outputFolder, string outputFileName)
+        {
+            var fileName = Path.GetExtension(outputFileName).Equals(".png", StringComparison.OrdinalIgnoreCase)
+                ? outputFileName
+                : outputFileName + ".png";
+            return Path.GetFullPath(Path.Combine(outputFolder, fileName));
         }
 
         private static AspectRatioSpec GetAspectRatio(AspectPreset preset, int customWidth, int customHeight)
