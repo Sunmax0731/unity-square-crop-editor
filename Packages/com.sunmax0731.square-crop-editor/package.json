@@ -3,7 +3,7 @@
   "displayName": "Unity Square Crop Editor",
   "version": "0.1.0",
   "unity": "6000.0",
-  "description": "Unity Editor extension for drag-selecting an image region and exporting it as a square PNG.",
+  "description": "Unity Editor extension for drag-selecting a transparent image region and exporting it as an aspect-ratio PNG.",
   "keywords": [
     "editor",
     "texture",
@@ -11,6 +11,9 @@
     "png",
     "square"
   ],
+  "dependencies": {
+    "com.unity.modules.imageconversion": "1.0.0"
+  },
   "author": {
     "name": "Sunmax0731",
     "url": "https://github.com/Sunmax0731"
