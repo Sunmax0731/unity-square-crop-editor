@@ -65,7 +65,11 @@ Export may still be blocked by output path or file system errors.
 
 ## 9. Session JSON Candidate
 
-If implemented in MVP, session JSON should use:
+Session JSON is deferred beyond `v0.1.0`.
+
+The MVP should keep all state in the EditorWindow session only. This avoids committing to a persistence format before the crop math, export behavior, and validation UX are proven.
+
+When persistence is added later, the candidate format is:
 
 ```json
 {
@@ -87,3 +91,26 @@ If implemented in MVP, session JSON should use:
   }
 }
 ```
+
+## 10. MVP Behavior Summary
+
+The initial implementation should behave as follows:
+
+- one source image at a time
+- one active crop selection at a time
+- visible selection overlay on the source preview
+- output preview updates from source, selection, size, and conversion mode
+- export writes a square PNG and never edits the source asset
+- `Overwrite`, `Skip`, and `Duplicate` are the initial file-conflict behaviors
+- export refreshes the AssetDatabase when the output is under `Assets/`
+
+## 11. Package Scaffold Handoff
+
+Issue #3 can start from these fixed decisions:
+
+- package path: `Packages/com.sunmax0731.square-crop-editor`
+- menu path: `Tools > Square Crop Editor > Open`
+- default output size: `256`
+- default output folder: `Assets/Generated/SquareCrop`
+- default conversion mode: `Fit`
+- MVP persistence: EditorWindow memory only

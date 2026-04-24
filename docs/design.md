@@ -18,6 +18,8 @@ Packages/com.sunmax0731.square-crop-editor/
 
 Runtime code should contain deterministic model and image-region calculations. Editor code should handle Unity-specific asset selection, preview rendering, PNG writing, and AssetDatabase refresh.
 
+For `v0.1.0`, persistence is intentionally not part of the architecture. The EditorWindow may hold transient state, but no session JSON or preset storage should be introduced until the MVP crop and export path is stable.
+
 ## 2. Core Models
 
 ### CropSelection
@@ -43,6 +45,8 @@ Fields:
 - `OutputFolder`
 - `OutputFileName`
 - `ConflictBehavior`
+
+This model should be serializable later, but the MVP should not depend on file-backed persistence.
 
 ### SquareConversionMode
 
@@ -139,3 +143,11 @@ Preferred behavior:
 2. If not readable and asset path is readable from disk, create a temporary readable copy.
 3. Delete temporary copy after export.
 4. Report failure reason if pixels still cannot be read.
+
+## 8. MVP Implementation Boundaries
+
+- Do not introduce batch processing services.
+- Do not introduce atlas, sprite-sheet, or grid-slicing abstractions.
+- Do not add external native image-processing dependencies.
+- Do not add session or preset UI in `v0.1.0`.
+- Keep crop math testable without launching the EditorWindow.
