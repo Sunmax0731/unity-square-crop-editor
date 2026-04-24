@@ -14,6 +14,13 @@
   "dependencies": {
     "com.unity.modules.imageconversion": "1.0.0"
   },
+  "samples": [
+    {
+      "displayName": "Transparent Icon Source",
+      "description": "Transparent PNG source image for manual crop and export smoke testing.",
+      "path": "Samples~/TransparentIconSource"
+    }
+  ],
   "author": {
     "name": "Sunmax0731",
     "url": "https://github.com/Sunmax0731"

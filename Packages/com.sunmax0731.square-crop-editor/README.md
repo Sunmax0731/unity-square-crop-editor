@@ -25,3 +25,15 @@ Tests/
 ```
 
 Runtime code should stay deterministic and testable. Editor code should handle Unity menu integration, windows, asset selection, export, and AssetDatabase refresh.
+
+## User Documents
+
+- [Manual](Manual.md)
+- [Japanese Manual](Manual.ja.md)
+- [Validation Checklist](ValidationChecklist.md)
+- [Release Notes](ReleaseNotes.md)
+- [Terms Of Use](TermsOfUse.md)
+
+## Sample
+
+Import `Transparent Icon Source` from Unity Package Manager to get a transparent PNG for manual smoke testing.
