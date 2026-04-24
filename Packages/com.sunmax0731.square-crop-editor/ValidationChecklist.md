@@ -42,6 +42,21 @@ $unity = 'C:\Program Files\Unity\6000.4.0f1\Editor\Unity.exe'
 - [ ] `ValidationChecklist.md`
 - [ ] `Samples~/TransparentIconSource`
 
+## Release Packaging
+
+- [ ] Run the release packaging script.
+- [ ] Confirm the release zip name matches the package version.
+- [ ] Confirm the release zip contains the UPM package folder.
+- [ ] Confirm the release zip contains the unitypackage.
+- [ ] Confirm the release zip contains `GitHubReleaseBody.ja.md`.
+- [ ] Confirm the release zip contains `BOOTHDescription.ja.md`.
+
+Suggested command:
+
+```powershell
+.\tools\release\New-ReleasePackage.ps1
+```
+
 ## Known Limitations Confirmed
 
 - [ ] Batch export is not listed as supported.
