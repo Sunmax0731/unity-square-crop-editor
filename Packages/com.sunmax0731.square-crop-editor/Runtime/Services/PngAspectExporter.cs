@@ -21,7 +21,7 @@ namespace Sunmax0731.SquareCropEditor.Services
 
             if (string.IsNullOrEmpty(conflictPath))
             {
-                return new PngExportResult(PngExportStatus.Skipped, outputPath, outputSize, "Output file already exists.");
+                return new PngExportResult(PngExportStatus.Skipped, outputPath, outputSize, $"Output file already exists and Conflict is set to Skip: {outputPath}");
             }
 
             try
@@ -38,7 +38,7 @@ namespace Sunmax0731.SquareCropEditor.Services
             }
             catch (Exception ex)
             {
-                return new PngExportResult(PngExportStatus.Error, conflictPath, outputSize, ex.Message);
+                return new PngExportResult(PngExportStatus.Error, conflictPath, outputSize, $"Failed to export PNG to '{conflictPath}': {ex.Message}");
             }
         }
 
@@ -116,17 +116,17 @@ namespace Sunmax0731.SquareCropEditor.Services
 
             if (string.IsNullOrWhiteSpace(request.OutputFolder))
             {
-                return "Output folder is missing.";
+                return "Output folder is missing. Choose an output folder or restore the default folder.";
             }
 
             if (string.IsNullOrWhiteSpace(request.OutputFileName))
             {
-                return "Output file name is missing.";
+                return "Output file name is missing. Enter a PNG file name.";
             }
 
             if (request.OutputFileName.IndexOfAny(Path.GetInvalidFileNameChars()) >= 0)
             {
-                return "Output file name contains invalid characters.";
+                return $"Output file name contains invalid characters: {request.OutputFileName}";
             }
 
             return string.Empty;

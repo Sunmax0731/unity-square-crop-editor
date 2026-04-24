@@ -124,6 +124,8 @@ namespace Sunmax0731.SquareCropEditor.Tests.Editor
             });
 
             Assert.That(result.Status, Is.EqualTo(PngExportStatus.Skipped));
+            Assert.That(result.Message, Does.Contain("Conflict is set to Skip"));
+            Assert.That(result.Message, Does.Contain(Path.GetFullPath(existingPath)));
             Assert.That(File.ReadAllText(existingPath), Is.EqualTo("existing"));
 
             UnityEngine.Object.DestroyImmediate(source);
@@ -196,7 +198,7 @@ namespace Sunmax0731.SquareCropEditor.Tests.Editor
             });
 
             Assert.That(result.Status, Is.EqualTo(PngExportStatus.Error));
-            Assert.That(result.Message, Is.EqualTo("Output file name is missing."));
+            Assert.That(result.Message, Is.EqualTo("Output file name is missing. Enter a PNG file name."));
 
             UnityEngine.Object.DestroyImmediate(source);
         }
