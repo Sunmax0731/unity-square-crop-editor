@@ -10,7 +10,9 @@ Acceptance:
 
 - requirements, design, and specification documents exist
 - GitHub Issues are created in Japanese
-- implementation can start from Issue 2
+- single-image, single-selection MVP scope is explicit
+- session JSON is deferred beyond `v0.1.0`
+- implementation can start from Issue 3
 
 ## P1 Core Logic
 
@@ -23,6 +25,7 @@ Acceptance:
 - package compiles in Unity
 - Runtime / Editor / Tests asmdefs exist
 - menu registration test can be added
+- package metadata matches the product name and menu path fixed in the specification
 
 ### 3. Crop Selection and Square Mapping
 

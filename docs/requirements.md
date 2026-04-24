@@ -14,6 +14,32 @@ The tool is intended for preparing item icons, portraits, thumbnails, UI images,
 
 ## 3. Functional Requirements
 
+### MVP Scope Decision
+
+`v0.1.0` is limited to a single-image, single-selection, square-PNG export workflow.
+
+Included:
+
+- one `Texture2D` source image
+- one active crop region
+- mouse drag selection in the preview
+- square output preview
+- `Fit`, `Fill`, and `Stretch` conversion modes
+- output size selection
+- PNG export under the Unity project
+- conflict handling for existing files
+- clear validation messages for export blockers
+
+Excluded from `v0.1.0`:
+
+- batch processing
+- automatic object detection
+- masks
+- non-square export
+- atlas or grid slicing
+- permanent source importer modification
+- preset browser or session JSON save/load UI
+
 ### RQ-001 Tool Launch
 
 The user can open the tool from:
@@ -85,9 +111,14 @@ If source pixels cannot be read directly, the tool should use a temporary readab
 
 ### RQ-009 Session Persistence
 
-The MVP should decide whether session JSON is required.
+Session JSON is not part of the `v0.1.0` MVP.
 
-If implemented, it should store:
+Reason:
+
+- The first release must prove the crop selection, square conversion, preview, and export path before adding persistence.
+- Repeatability can be added after the core workflow is validated.
+
+When implemented after MVP, it should store:
 
 - source asset path
 - crop region
@@ -95,15 +126,25 @@ If implemented, it should store:
 - conversion mode
 - output folder and file name
 
-## 4. Non-Functional Requirements
+## 4. UX Requirements
+
+- The user must be able to complete the MVP workflow from one EditorWindow.
+- Controls that cannot run because required input is missing should be disabled or paired with a clear validation message.
+- The preview must prioritize direct manipulation over form-only input.
+- Export should be blocked only for hard errors such as missing source, invalid crop, invalid output size, or invalid output path.
+- Warnings such as a small selection should remain visible but should not prevent preview.
+
+## 5. Non-Functional Requirements
 
 - Unity `6000.0` or later.
 - Windows Unity Editor is the primary supported environment.
 - Editor-only package.
 - Deterministic crop math with EditMode tests.
 - UI operations should remain responsive for typical icon and portrait images.
+- The package must remain independent from Unity Grid Asset Slicer.
+- The tool must not require external image-processing dependencies for the MVP.
 
-## 5. MVP Acceptance
+## 6. MVP Acceptance
 
 - Tool opens from the Tools menu.
 - User can select a PNG texture.
@@ -111,3 +152,13 @@ If implemented, it should store:
 - User can preview a square result.
 - User can export a PNG.
 - EditMode tests cover crop math and output rect calculation.
+
+## 7. Implementation Start Criteria
+
+Implementation can move to package scaffold when:
+
+- `Fit`, `Fill`, and `Stretch` are the only MVP conversion modes.
+- Session JSON is explicitly deferred beyond `v0.1.0`.
+- Crop coordinates are defined as top-left UI-facing source pixel coordinates.
+- Export defaults are defined in the functional specification.
+- Validation scope is defined in `docs/validation-plan.md`.
