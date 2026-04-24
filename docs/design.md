@@ -33,6 +33,26 @@ Fields:
 - `Width`
 - `Height`
 
+The crop region is the committed pixel rectangle after drag normalization, source-bound clamping, and active crop aspect ratio constraint.
+
+### AspectRatioSpec
+
+Represents a user-selectable ratio.
+
+Fields:
+
+- `Mode` (`Preset` or `Custom`)
+- `Width`
+- `Height`
+
+Initial presets:
+
+- `1:1`
+- `4:3`
+- `3:4`
+- `16:9`
+- `9:16`
+
 ### SquareCropSettings
 
 Represents output configuration.
@@ -40,15 +60,16 @@ Represents output configuration.
 Fields:
 
 - `OutputSize`
+- `CropAspectRatio`
+- `OutputAspectRatio`
 - `ConversionMode`
-- `PaddingColor`
 - `OutputFolder`
 - `OutputFileName`
 - `ConflictBehavior`
 
 This model should be serializable later, but the MVP should not depend on file-backed persistence.
 
-### SquareConversionMode
+### CanvasMappingMode
 
 Initial values:
 
@@ -66,28 +87,32 @@ Responsibilities:
 
 - account for preview scaling
 - clamp selection to source image bounds
+- apply the active crop aspect ratio during drag
 - normalize drag direction
 - reject zero-sized regions
 
-### SquareOutputPlanner
+### AspectOutputPlanner
 
-Calculates how the selected region maps onto the square output canvas.
+Calculates how the selected region maps onto the configured output canvas.
 
 Responsibilities:
 
-- fit/fill/stretch source rect
+- derive output width and height from long edge size and output aspect ratio
+- fit/fill/stretch source rect onto the output canvas
 - calculate destination rect
 - calculate transparent padding
 - return warnings when selection is too small or invalid
 
-### PngSquareExporter
+### PngAspectExporter
 
-Exports the selected region as a PNG.
+Exports the selected region as a transparent PNG.
 
 Responsibilities:
 
 - read pixels
-- resample into square texture
+- resample into configured output dimensions
+- preserve source alpha
+- keep padding pixels transparent
 - encode PNG
 - write file
 - return exported/skipped/error result
@@ -102,15 +127,16 @@ Toolbar:
 
 Left pane:
   Source
+  Selection Aspect Ratio
   Crop Settings
   Output
 
 Center pane:
   Source image preview
-  draggable selection overlay
+  draggable ratio-constrained selection overlay
 
 Right pane:
-  Square output preview
+  transparent output preview
   selection details
   validation report
 ```
@@ -120,18 +146,28 @@ Right pane:
 - Mouse down starts selection.
 - Drag updates selection.
 - Mouse up commits selection.
-- Shift-drag may constrain selection to square in source space as a future option.
+- The active crop aspect ratio constrains the selection during drag.
+- The default active crop aspect ratio is square.
+- Ratio preset and custom numeric controls should update the active selection when possible.
 - Escape may clear active selection as a future option.
 
 ## 6. Output Behavior
 
-The source selection may be rectangular, but exported output is always square.
+The source selection and exported output each have an aspect ratio.
+
+The default for both is square (`1:1`), but the user can select presets or enter a custom numeric ratio for each.
 
 Mode behavior:
 
-- `Fit`: no source pixels are lost; unused square area is transparent or padding color.
-- `Fill`: square is filled; source region may be cropped.
-- `Stretch`: direct scale; aspect ratio may change.
+- `Fit`: no source pixels are lost; unused output canvas area is transparent.
+- `Fill`: output canvas is filled; source region may be cropped.
+- `Stretch`: direct scale to output dimensions; aspect ratio may change.
+
+Alpha behavior:
+
+- Source alpha is preserved during resampling.
+- Empty output canvas pixels are transparent.
+- The MVP does not include a solid background or matte color.
 
 ## 7. Readability Strategy
 
@@ -151,3 +187,4 @@ Preferred behavior:
 - Do not add external native image-processing dependencies.
 - Do not add session or preset UI in `v0.1.0`.
 - Keep crop math testable without launching the EditorWindow.
+- Keep alpha handling explicit in planner/exporter tests.

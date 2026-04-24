@@ -10,7 +10,8 @@ Acceptance:
 
 - requirements, design, and specification documents exist
 - GitHub Issues are created in Japanese
-- single-image, single-selection MVP scope is explicit
+- single-image, single-selection transparent PNG MVP scope is explicit
+- crop and output aspect ratio requirements are explicit
 - session JSON is deferred beyond `v0.1.0`
 - implementation can start from Issue 3
 
@@ -27,23 +28,27 @@ Acceptance:
 - menu registration test can be added
 - package metadata matches the product name and menu path fixed in the specification
 
-### 3. Crop Selection and Square Mapping
+### 3. Crop Selection and Aspect Mapping
 
-Goal: implement pure C# crop rectangle and square mapping logic.
+Goal: implement pure C# crop rectangle and aspect-ratio mapping logic.
 
 Acceptance:
 
 - drag normalization is tested
 - source-bound clamping is tested
+- crop aspect ratio constraints are tested
+- output dimension derivation is tested
 - Fit / Fill / Stretch mapping is tested
 
 ### 4. PNG Export Service
 
-Goal: export selected region to a square PNG.
+Goal: export selected region to a transparent PNG with the configured output aspect ratio.
 
 Acceptance:
 
-- output size is respected
+- output size and aspect ratio are respected
+- source alpha is preserved
+- transparent padding remains transparent
 - Fit / Fill / Stretch produce expected dimensions
 - conflict behavior is tested
 
@@ -51,13 +56,13 @@ Acceptance:
 
 ### 5. Editor Window MVP
 
-Goal: implement source selection, drag preview, output preview, and export UI.
+Goal: implement source selection, ratio-constrained drag preview, output preview, and export UI.
 
 Acceptance:
 
 - source image can be selected
-- drag selection appears on image
-- square preview updates
+- drag selection appears on image with the selected crop aspect ratio
+- transparent output preview updates
 - export writes PNG under `Assets/`
 
 ### 6. Readability and Validation UX
