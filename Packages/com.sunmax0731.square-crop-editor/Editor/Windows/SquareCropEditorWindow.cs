@@ -143,8 +143,29 @@ namespace Sunmax0731.SquareCropEditor.Editor.Windows
             _settings.OutputSize = Mathf.Max(1, EditorGUILayout.IntField("Output Long Edge", _settings.OutputSize));
             _settings.MappingMode = (CanvasMappingMode)EditorGUILayout.EnumPopup("Mapping", _settings.MappingMode);
             _settings.ConflictBehavior = (ExportConflictBehavior)EditorGUILayout.EnumPopup("Conflict", _settings.ConflictBehavior);
-            _settings.OutputFolder = EditorGUILayout.TextField("Output Folder", _settings.OutputFolder);
-            _settings.OutputFileName = EditorGUILayout.TextField("Output File", _settings.OutputFileName);
+
+            using (new EditorGUILayout.HorizontalScope())
+            {
+                _settings.OutputFolder = EditorGUILayout.TextField("Output Folder", _settings.OutputFolder);
+                if (GUILayout.Button("Select", GUILayout.Width(64)))
+                {
+                    SelectOutputFolder();
+                }
+
+                if (GUILayout.Button("Default", GUILayout.Width(64)))
+                {
+                    _settings.OutputFolder = SquareCropSettings.DefaultOutputFolder;
+                }
+            }
+
+            using (new EditorGUILayout.HorizontalScope())
+            {
+                _settings.OutputFileName = EditorGUILayout.TextField("Output File", _settings.OutputFileName);
+                if (GUILayout.Button(".png", GUILayout.Width(48)))
+                {
+                    _settings.OutputFileName = EnsurePngExtension(_settings.OutputFileName);
+                }
+            }
         }
 
         private void DrawPreviewArea()
@@ -337,7 +358,7 @@ namespace Sunmax0731.SquareCropEditor.Editor.Windows
 
                 if (result.Status == PngExportStatus.Exported)
                 {
-                    RefreshAssetDatabaseIfNeeded(result.OutputPath);
+                    SelectOutputAssetIfNeeded(result.OutputPath);
                     SetStatus(readable.OwnsTexture ? $"Exported with temporary readable copy: {result.OutputPath}" : $"Exported: {result.OutputPath}", readable.OwnsTexture ? MessageType.Warning : MessageType.Info);
                 }
                 else if (result.Status == PngExportStatus.Skipped)
@@ -418,13 +439,77 @@ namespace Sunmax0731.SquareCropEditor.Editor.Windows
             return texture;
         }
 
-        private static void RefreshAssetDatabaseIfNeeded(string outputPath)
+        private void SelectOutputFolder()
+        {
+            var currentFolder = ResolveOutputFolderForPanel(_settings.OutputFolder);
+            var selectedFolder = EditorUtility.OpenFolderPanel("Select Output Folder", currentFolder, string.Empty);
+            if (string.IsNullOrEmpty(selectedFolder))
+            {
+                return;
+            }
+
+            _settings.OutputFolder = ToProjectRelativePath(selectedFolder);
+        }
+
+        private static string ResolveOutputFolderForPanel(string outputFolder)
+        {
+            if (string.IsNullOrWhiteSpace(outputFolder))
+            {
+                return Application.dataPath;
+            }
+
+            if (Path.IsPathRooted(outputFolder))
+            {
+                return outputFolder;
+            }
+
+            return Path.GetFullPath(outputFolder);
+        }
+
+        private static string ToProjectRelativePath(string folderPath)
+        {
+            var projectPath = Path.GetFullPath(Path.Combine(Application.dataPath, ".."));
+            var fullFolderPath = Path.GetFullPath(folderPath);
+            var relativePath = Path.GetRelativePath(projectPath, fullFolderPath);
+            if (!relativePath.StartsWith("..", StringComparison.Ordinal) && !Path.IsPathRooted(relativePath))
+            {
+                return relativePath.Replace('\\', '/');
+            }
+
+            return fullFolderPath;
+        }
+
+        private static string EnsurePngExtension(string fileName)
+        {
+            if (string.IsNullOrWhiteSpace(fileName))
+            {
+                return "square_crop.png";
+            }
+
+            return Path.GetExtension(fileName).Equals(".png", StringComparison.OrdinalIgnoreCase)
+                ? fileName
+                : fileName + ".png";
+        }
+
+        private static void SelectOutputAssetIfNeeded(string outputPath)
         {
             var assetsPath = Path.GetFullPath("Assets");
-            if (Path.GetFullPath(outputPath).StartsWith(assetsPath, StringComparison.OrdinalIgnoreCase))
+            var fullOutputPath = Path.GetFullPath(outputPath);
+            if (!fullOutputPath.StartsWith(assetsPath, StringComparison.OrdinalIgnoreCase))
             {
-                AssetDatabase.Refresh();
+                return;
             }
+
+            AssetDatabase.Refresh();
+            var assetPath = "Assets" + fullOutputPath.Substring(assetsPath.Length).Replace('\\', '/');
+            var asset = AssetDatabase.LoadAssetAtPath<UnityEngine.Object>(assetPath);
+            if (asset == null)
+            {
+                return;
+            }
+
+            Selection.activeObject = asset;
+            EditorGUIUtility.PingObject(asset);
         }
 
         private void DestroyPreviewTexture()
