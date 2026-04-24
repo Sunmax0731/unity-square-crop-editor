@@ -9,9 +9,13 @@ namespace Sunmax0731.SquareCropEditor.Models
         public const string DefaultOutputFolder = "Assets/Generated/SquareCrop";
         public const string DefaultFileNameSuffix = "_crop";
 
+        public AspectRatioSpec CropAspectRatio { get; set; } = AspectRatioSpec.Square;
+
+        public AspectRatioSpec OutputAspectRatio { get; set; } = AspectRatioSpec.Square;
+
         public int OutputSize { get; set; } = DefaultOutputSize;
 
-        public SquareConversionMode ConversionMode { get; set; } = SquareConversionMode.Fit;
+        public CanvasMappingMode MappingMode { get; set; } = CanvasMappingMode.Fit;
 
         public string OutputFolder { get; set; } = DefaultOutputFolder;
 

@@ -13,8 +13,10 @@ namespace Sunmax0731.SquareCropEditor.Tests.Editor
 
             Assert.That(SquareCropDefaults.MenuPath, Is.EqualTo("Tools/Square Crop Editor/Open"));
             Assert.That(settings.OutputSize, Is.EqualTo(256));
+            Assert.That(settings.CropAspectRatio, Is.EqualTo(AspectRatioSpec.Square));
+            Assert.That(settings.OutputAspectRatio, Is.EqualTo(AspectRatioSpec.Square));
             Assert.That(settings.OutputFolder, Is.EqualTo("Assets/Generated/SquareCrop"));
-            Assert.That(settings.ConversionMode, Is.EqualTo(SquareConversionMode.Fit));
+            Assert.That(settings.MappingMode, Is.EqualTo(CanvasMappingMode.Fit));
             Assert.That(settings.ConflictBehavior, Is.EqualTo(ExportConflictBehavior.Duplicate));
         }
 
