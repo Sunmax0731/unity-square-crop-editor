@@ -46,6 +46,55 @@ namespace Sunmax0731.SquareCropEditor.Services
             return new CropSelection(x, y, width, height);
         }
 
+        public static CropSelection FromManualInput(
+            int x,
+            int y,
+            int width,
+            int height,
+            PixelSize sourceSize,
+            AspectRatioSpec aspectRatio)
+        {
+            if (!sourceSize.IsValid)
+            {
+                throw new ArgumentOutOfRangeException(nameof(sourceSize), "Source size must be positive.");
+            }
+
+            if (!aspectRatio.IsValid)
+            {
+                throw new ArgumentOutOfRangeException(nameof(aspectRatio), "Aspect ratio must be positive.");
+            }
+
+            var clampedWidth = Math.Max(1, Math.Min(width, sourceSize.Width));
+            var clampedHeight = Math.Max(1, Math.Min(height, sourceSize.Height));
+            var ratio = aspectRatio.Value;
+
+            if ((double)clampedWidth / clampedHeight > ratio)
+            {
+                clampedWidth = Math.Max(1, (int)Math.Round(clampedHeight * ratio));
+            }
+            else
+            {
+                clampedHeight = Math.Max(1, (int)Math.Round(clampedWidth / ratio));
+            }
+
+            if (clampedWidth > sourceSize.Width)
+            {
+                clampedWidth = sourceSize.Width;
+                clampedHeight = Math.Max(1, (int)Math.Round(clampedWidth / ratio));
+            }
+
+            if (clampedHeight > sourceSize.Height)
+            {
+                clampedHeight = sourceSize.Height;
+                clampedWidth = Math.Max(1, (int)Math.Round(clampedHeight * ratio));
+            }
+
+            var clampedX = Math.Max(0, Math.Min(x, sourceSize.Width - clampedWidth));
+            var clampedY = Math.Max(0, Math.Min(y, sourceSize.Height - clampedHeight));
+
+            return new CropSelection(clampedX, clampedY, clampedWidth, clampedHeight);
+        }
+
         public static CropSelection FromPreviewDrag(
             double startX,
             double startY,

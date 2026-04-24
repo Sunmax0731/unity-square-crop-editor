@@ -83,6 +83,7 @@ namespace Sunmax0731.SquareCropEditor.Editor.Windows
             }
 
             DrawSelectionActions();
+            DrawSelectionFields();
             DrawPreviewArea();
             DrawExportButton();
         }
@@ -195,6 +196,36 @@ namespace Sunmax0731.SquareCropEditor.Editor.Windows
                             new PixelSize(_sourceTexture.width, _sourceTexture.height),
                             GetAspectRatio(_cropPreset, _customCropWidth, _customCropHeight));
                         RefreshOutputPreview();
+                    }
+                }
+            }
+        }
+
+        private void DrawSelectionFields()
+        {
+            using (new EditorGUILayout.HorizontalScope())
+            {
+                using (new EditorGUI.DisabledScope(_sourceTexture == null || !_selection.IsValid))
+                {
+                    EditorGUILayout.LabelField("Selection", GUILayout.Width(64));
+                    using (var change = new EditorGUI.ChangeCheckScope())
+                    {
+                        var x = EditorGUILayout.IntField("X", _selection.IsValid ? _selection.X : 0, GUILayout.MaxWidth(96));
+                        var y = EditorGUILayout.IntField("Y", _selection.IsValid ? _selection.Y : 0, GUILayout.MaxWidth(96));
+                        var width = EditorGUILayout.IntField("W", _selection.IsValid ? _selection.Width : 0, GUILayout.MaxWidth(96));
+                        var height = EditorGUILayout.IntField("H", _selection.IsValid ? _selection.Height : 0, GUILayout.MaxWidth(96));
+
+                        if (change.changed)
+                        {
+                            _selection = CropRectCalculator.FromManualInput(
+                                x,
+                                y,
+                                width,
+                                height,
+                                new PixelSize(_sourceTexture.width, _sourceTexture.height),
+                                GetAspectRatio(_cropPreset, _customCropWidth, _customCropHeight));
+                            RefreshOutputPreview();
+                        }
                     }
                 }
             }
