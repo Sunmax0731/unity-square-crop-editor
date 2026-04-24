@@ -5,6 +5,47 @@ namespace Sunmax0731.SquareCropEditor.Services
 {
     public static class CropRectCalculator
     {
+        public static CropSelection FullSource(PixelSize sourceSize)
+        {
+            if (!sourceSize.IsValid)
+            {
+                throw new ArgumentOutOfRangeException(nameof(sourceSize), "Source size must be positive.");
+            }
+
+            return new CropSelection(0, 0, sourceSize.Width, sourceSize.Height);
+        }
+
+        public static CropSelection CenterCrop(PixelSize sourceSize, AspectRatioSpec aspectRatio)
+        {
+            if (!sourceSize.IsValid)
+            {
+                throw new ArgumentOutOfRangeException(nameof(sourceSize), "Source size must be positive.");
+            }
+
+            if (!aspectRatio.IsValid)
+            {
+                throw new ArgumentOutOfRangeException(nameof(aspectRatio), "Aspect ratio must be positive.");
+            }
+
+            var sourceRatio = (double)sourceSize.Width / sourceSize.Height;
+            var targetRatio = aspectRatio.Value;
+            var width = sourceSize.Width;
+            var height = sourceSize.Height;
+
+            if (sourceRatio > targetRatio)
+            {
+                width = Math.Max(1, (int)Math.Round(sourceSize.Height * targetRatio));
+            }
+            else if (sourceRatio < targetRatio)
+            {
+                height = Math.Max(1, (int)Math.Round(sourceSize.Width / targetRatio));
+            }
+
+            var x = Math.Max(0, (sourceSize.Width - width) / 2);
+            var y = Math.Max(0, (sourceSize.Height - height) / 2);
+            return new CropSelection(x, y, width, height);
+        }
+
         public static CropSelection FromPreviewDrag(
             double startX,
             double startY,

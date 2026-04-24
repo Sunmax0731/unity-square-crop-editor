@@ -61,6 +61,24 @@ namespace Sunmax0731.SquareCropEditor.Tests.Editor
         }
 
         [Test]
+        public void FullSourceUsesEntireSourceBounds()
+        {
+            var selection = CropRectCalculator.FullSource(new PixelSize(320, 180));
+
+            Assert.That(selection, Is.EqualTo(new CropSelection(0, 0, 320, 180)));
+        }
+
+        [Test]
+        public void CenterCropUsesLargestCenteredAreaForTargetRatio()
+        {
+            var selection = CropRectCalculator.CenterCrop(
+                new PixelSize(320, 180),
+                AspectRatioSpec.Square);
+
+            Assert.That(selection, Is.EqualTo(new CropSelection(70, 0, 180, 180)));
+        }
+
+        [Test]
         public void FitMapsFullSourceInsideTransparentCanvasArea()
         {
             var plan = AspectOutputPlanner.Plan(

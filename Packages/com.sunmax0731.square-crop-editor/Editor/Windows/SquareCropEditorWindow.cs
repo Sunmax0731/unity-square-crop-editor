@@ -81,6 +81,7 @@ namespace Sunmax0731.SquareCropEditor.Editor.Windows
                 }
             }
 
+            DrawSelectionActions();
             DrawPreviewArea();
             DrawExportButton();
         }
@@ -164,6 +165,36 @@ namespace Sunmax0731.SquareCropEditor.Editor.Windows
                 if (GUILayout.Button(".png", GUILayout.Width(48)))
                 {
                     _settings.OutputFileName = EnsurePngExtension(_settings.OutputFileName);
+                }
+            }
+        }
+
+        private void DrawSelectionActions()
+        {
+            using (new EditorGUILayout.HorizontalScope())
+            {
+                using (new EditorGUI.DisabledScope(_sourceTexture == null))
+                {
+                    if (GUILayout.Button("Reset Selection"))
+                    {
+                        _selection = default;
+                        DestroyPreviewTexture();
+                        SetStatus("Selection reset.", MessageType.Info);
+                    }
+
+                    if (GUILayout.Button("Use Full Source"))
+                    {
+                        _selection = CropRectCalculator.FullSource(new PixelSize(_sourceTexture.width, _sourceTexture.height));
+                        RefreshOutputPreview();
+                    }
+
+                    if (GUILayout.Button("Center Crop"))
+                    {
+                        _selection = CropRectCalculator.CenterCrop(
+                            new PixelSize(_sourceTexture.width, _sourceTexture.height),
+                            GetAspectRatio(_cropPreset, _customCropWidth, _customCropHeight));
+                        RefreshOutputPreview();
+                    }
                 }
             }
         }
