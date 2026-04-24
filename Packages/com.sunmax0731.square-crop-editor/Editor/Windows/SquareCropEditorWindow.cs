@@ -30,6 +30,8 @@ namespace Sunmax0731.SquareCropEditor.Editor.Windows
         private int _customOutputHeight = 1;
         private Vector2 _dragStartLocal;
         private Rect _dragImageRect;
+        private float _sourceZoom = 1f;
+        private Vector2 _sourcePan;
         private bool _isDragging;
         private string _statusMessage = "Select a source texture.";
         private MessageType _statusType = MessageType.Info;
@@ -246,6 +248,7 @@ namespace Sunmax0731.SquareCropEditor.Editor.Windows
             using (new EditorGUILayout.VerticalScope(GUILayout.MinWidth(position.width * 0.58f)))
             {
                 EditorGUILayout.LabelField("Source", EditorStyles.boldLabel);
+                DrawSourceViewControls();
                 var previewRect = GUILayoutUtility.GetRect(10, 10000, MinPreviewHeight, MinPreviewHeight, GUILayout.ExpandWidth(true));
                 EditorGUI.DrawRect(previewRect, new Color(0.13f, 0.13f, 0.13f));
 
@@ -255,10 +258,48 @@ namespace Sunmax0731.SquareCropEditor.Editor.Windows
                     return;
                 }
 
-                var imageRect = FitRect(previewRect, _sourceTexture.width, _sourceTexture.height);
-                GUI.DrawTexture(imageRect, _sourceTexture, ScaleMode.StretchToFill, true);
-                HandleDragSelection(imageRect);
-                DrawSelection(imageRect);
+                var fittedRect = FitRect(previewRect, _sourceTexture.width, _sourceTexture.height);
+                var imageRect = ApplyZoomAndPan(previewRect, fittedRect, _sourceZoom, _sourcePan);
+                GUI.BeginClip(previewRect);
+                var localImageRect = new Rect(
+                    imageRect.x - previewRect.x,
+                    imageRect.y - previewRect.y,
+                    imageRect.width,
+                    imageRect.height);
+                GUI.DrawTexture(localImageRect, _sourceTexture, ScaleMode.StretchToFill, true);
+                DrawSelection(localImageRect);
+                GUI.EndClip();
+                HandleDragSelection(imageRect, previewRect);
+            }
+        }
+
+        private void DrawSourceViewControls()
+        {
+            using (new EditorGUILayout.HorizontalScope())
+            {
+                using (new EditorGUI.DisabledScope(_sourceTexture == null))
+                {
+                    _sourceZoom = EditorGUILayout.Slider("Zoom", _sourceZoom, 1f, 8f);
+                    if (GUILayout.Button("1:1", GUILayout.Width(44)))
+                    {
+                        _sourceZoom = 1f;
+                        _sourcePan = Vector2.zero;
+                    }
+                }
+            }
+
+            using (new EditorGUILayout.HorizontalScope())
+            {
+                using (new EditorGUI.DisabledScope(_sourceTexture == null || _sourceZoom <= 1f))
+                {
+                    _sourcePan.x = EditorGUILayout.Slider("Pan X", _sourcePan.x, -1f, 1f);
+                    _sourcePan.y = EditorGUILayout.Slider("Pan Y", _sourcePan.y, -1f, 1f);
+                }
+            }
+
+            if (_sourceZoom <= 1f)
+            {
+                _sourcePan = Vector2.zero;
             }
         }
 
@@ -294,7 +335,7 @@ namespace Sunmax0731.SquareCropEditor.Editor.Windows
             }
         }
 
-        private void HandleDragSelection(Rect imageRect)
+        private void HandleDragSelection(Rect imageRect, Rect previewRect)
         {
             var currentEvent = Event.current;
             if (currentEvent == null)
@@ -302,7 +343,7 @@ namespace Sunmax0731.SquareCropEditor.Editor.Windows
                 return;
             }
 
-            if (currentEvent.type == EventType.MouseDown && currentEvent.button == 0 && imageRect.Contains(currentEvent.mousePosition))
+            if (currentEvent.type == EventType.MouseDown && currentEvent.button == 0 && previewRect.Contains(currentEvent.mousePosition) && imageRect.Contains(currentEvent.mousePosition))
             {
                 _dragImageRect = imageRect;
                 _dragStartLocal = ClampLocalPoint(currentEvent.mousePosition - _dragImageRect.position, _dragImageRect);
@@ -312,8 +353,9 @@ namespace Sunmax0731.SquareCropEditor.Editor.Windows
 
             if (_isDragging && (currentEvent.type == EventType.MouseDrag || currentEvent.type == EventType.MouseUp))
             {
+                var clampedMousePosition = ClampPointToRect(currentEvent.mousePosition, previewRect);
                 var localStart = ClampLocalPoint(_dragStartLocal, _dragImageRect);
-                var localEnd = ClampLocalPoint(currentEvent.mousePosition - _dragImageRect.position, _dragImageRect);
+                var localEnd = ClampLocalPoint(clampedMousePosition - _dragImageRect.position, _dragImageRect);
                 _selection = CropRectCalculator.FromPreviewDrag(
                     localStart.x,
                     localStart.y,
@@ -331,6 +373,13 @@ namespace Sunmax0731.SquareCropEditor.Editor.Windows
                     _isDragging = false;
                 }
             }
+        }
+
+        private static Vector2 ClampPointToRect(Vector2 point, Rect rect)
+        {
+            return new Vector2(
+                Mathf.Clamp(point.x, rect.xMin, rect.xMax),
+                Mathf.Clamp(point.y, rect.yMin, rect.yMax));
         }
 
         private static Vector2 ClampLocalPoint(Vector2 point, Rect imageRect)
@@ -502,6 +551,20 @@ namespace Sunmax0731.SquareCropEditor.Editor.Windows
                 container.y + (container.height - fittedHeight) * 0.5f,
                 fittedWidth,
                 fittedHeight);
+        }
+
+        private static Rect ApplyZoomAndPan(Rect container, Rect fittedRect, float zoom, Vector2 pan)
+        {
+            zoom = Mathf.Max(1f, zoom);
+            var width = fittedRect.width * zoom;
+            var height = fittedRect.height * zoom;
+            var maxPanX = Mathf.Max(0f, (width - container.width) * 0.5f);
+            var maxPanY = Mathf.Max(0f, (height - container.height) * 0.5f);
+            return new Rect(
+                container.center.x - width * 0.5f + Mathf.Clamp(pan.x, -1f, 1f) * maxPanX,
+                container.center.y - height * 0.5f + Mathf.Clamp(pan.y, -1f, 1f) * maxPanY,
+                width,
+                height);
         }
 
         private static void DrawCenteredLabel(Rect rect, string text)
