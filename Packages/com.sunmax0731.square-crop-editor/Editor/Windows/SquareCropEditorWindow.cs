@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using Sunmax0731.SquareCropEditor.Editor.Export;
 using Sunmax0731.SquareCropEditor.Models;
 using Sunmax0731.SquareCropEditor.Services;
 using UnityEditor;
@@ -95,7 +96,14 @@ namespace Sunmax0731.SquareCropEditor.Editor.Windows
                 if (_sourceTexture != null)
                 {
                     _settings.OutputFileName = Path.GetFileNameWithoutExtension(AssetDatabase.GetAssetPath(_sourceTexture)) + SquareCropSettings.DefaultFileNameSuffix + ".png";
-                    SetStatus($"Source: {_sourceTexture.width} x {_sourceTexture.height}", MessageType.Info);
+                    if (TextureReadbackService.CanReadPixels(_sourceTexture))
+                    {
+                        SetStatus($"Source: {_sourceTexture.width} x {_sourceTexture.height}", MessageType.Info);
+                    }
+                    else
+                    {
+                        SetStatus("Source texture is not directly readable. Preview/export will use a temporary readable copy when possible.", MessageType.Warning);
+                    }
                 }
                 else
                 {
@@ -270,10 +278,24 @@ namespace Sunmax0731.SquareCropEditor.Editor.Windows
 
             try
             {
-                var outputSize = AspectOutputPlanner.CalculateOutputSize(_settings.OutputSize, GetAspectRatio(_outputPreset, _customOutputWidth, _customOutputHeight));
-                var plan = AspectOutputPlanner.Plan(_selection, outputSize, _settings.MappingMode);
-                _outputPreview = PngAspectExporter.Render(_sourceTexture, plan);
-                SetStatus($"Selection: {_selection.Width} x {_selection.Height}", MessageType.Info);
+                var readable = TextureReadbackService.GetReadableTexture(_sourceTexture);
+                if (!readable.Success)
+                {
+                    SetStatus(readable.Message, MessageType.Error);
+                    return;
+                }
+
+                try
+                {
+                    var outputSize = AspectOutputPlanner.CalculateOutputSize(_settings.OutputSize, GetAspectRatio(_outputPreset, _customOutputWidth, _customOutputHeight));
+                    var plan = AspectOutputPlanner.Plan(_selection, outputSize, _settings.MappingMode);
+                    _outputPreview = PngAspectExporter.Render(readable.Texture, plan);
+                    SetStatus(readable.OwnsTexture ? $"Selection: {_selection.Width} x {_selection.Height}. Using temporary readable copy." : $"Selection: {_selection.Width} x {_selection.Height}", readable.OwnsTexture ? MessageType.Warning : MessageType.Info);
+                }
+                finally
+                {
+                    TextureReadbackService.DestroyIfOwned(readable);
+                }
             }
             catch (Exception ex)
             {
@@ -283,30 +305,44 @@ namespace Sunmax0731.SquareCropEditor.Editor.Windows
 
         private void ExportPng()
         {
-            var result = PngAspectExporter.Export(new PngExportRequest
+            var readable = TextureReadbackService.GetReadableTexture(_sourceTexture);
+            if (!readable.Success)
             {
-                SourceTexture = _sourceTexture,
-                Selection = _selection,
-                OutputLongEdge = _settings.OutputSize,
-                OutputAspectRatio = GetAspectRatio(_outputPreset, _customOutputWidth, _customOutputHeight),
-                MappingMode = _settings.MappingMode,
-                OutputFolder = _settings.OutputFolder,
-                OutputFileName = _settings.OutputFileName,
-                ConflictBehavior = _settings.ConflictBehavior
-            });
+                SetStatus(readable.Message, MessageType.Error);
+                return;
+            }
 
-            if (result.Status == PngExportStatus.Exported)
+            try
             {
-                RefreshAssetDatabaseIfNeeded(result.OutputPath);
-                SetStatus($"Exported: {result.OutputPath}", MessageType.Info);
+                var result = PngAspectExporter.Export(new PngExportRequest
+                {
+                    SourceTexture = readable.Texture,
+                    Selection = _selection,
+                    OutputLongEdge = _settings.OutputSize,
+                    OutputAspectRatio = GetAspectRatio(_outputPreset, _customOutputWidth, _customOutputHeight),
+                    MappingMode = _settings.MappingMode,
+                    OutputFolder = _settings.OutputFolder,
+                    OutputFileName = _settings.OutputFileName,
+                    ConflictBehavior = _settings.ConflictBehavior
+                });
+
+                if (result.Status == PngExportStatus.Exported)
+                {
+                    RefreshAssetDatabaseIfNeeded(result.OutputPath);
+                    SetStatus(readable.OwnsTexture ? $"Exported with temporary readable copy: {result.OutputPath}" : $"Exported: {result.OutputPath}", readable.OwnsTexture ? MessageType.Warning : MessageType.Info);
+                }
+                else if (result.Status == PngExportStatus.Skipped)
+                {
+                    SetStatus(result.Message, MessageType.Warning);
+                }
+                else
+                {
+                    SetStatus(result.Message, MessageType.Error);
+                }
             }
-            else if (result.Status == PngExportStatus.Skipped)
+            finally
             {
-                SetStatus(result.Message, MessageType.Warning);
-            }
-            else
-            {
-                SetStatus(result.Message, MessageType.Error);
+                TextureReadbackService.DestroyIfOwned(readable);
             }
         }
 
