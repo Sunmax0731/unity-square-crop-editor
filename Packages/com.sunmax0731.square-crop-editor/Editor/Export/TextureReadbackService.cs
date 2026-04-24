@@ -1,5 +1,4 @@
 using System;
-using System.IO;
 using UnityEditor;
 using UnityEngine;
 
@@ -38,37 +37,39 @@ namespace Sunmax0731.SquareCropEditor.Editor.Export
                 return new ReadableTextureResult(true, sourceTexture, false, "Source texture is readable.");
             }
 
-            var assetPath = AssetDatabase.GetAssetPath(sourceTexture);
-            if (string.IsNullOrEmpty(assetPath))
-            {
-                return new ReadableTextureResult(false, null, false, "Source texture cannot be read and is not a project asset.");
-            }
-
-            var fullPath = Path.GetFullPath(assetPath);
-            if (!File.Exists(fullPath))
-            {
-                return new ReadableTextureResult(false, null, false, $"Source texture file was not found: {assetPath}");
-            }
-
             try
             {
-                var readableTexture = new Texture2D(2, 2, TextureFormat.RGBA32, false)
-                {
-                    name = sourceTexture.name + "_ReadableCopy",
-                    hideFlags = HideFlags.HideAndDontSave
-                };
-
-                if (!ImageConversion.LoadImage(readableTexture, File.ReadAllBytes(fullPath), false))
-                {
-                    UnityEngine.Object.DestroyImmediate(readableTexture);
-                    return new ReadableTextureResult(false, null, false, $"Source texture file could not be decoded: {assetPath}");
-                }
-
-                return new ReadableTextureResult(true, readableTexture, true, "Created a temporary readable copy without changing importer settings.");
+                var readableTexture = CreateReadableCopy(sourceTexture);
+                return new ReadableTextureResult(true, readableTexture, true, "Created a temporary readable copy from the imported texture without changing importer settings.");
             }
             catch (Exception ex)
             {
                 return new ReadableTextureResult(false, null, false, ex.Message);
+            }
+        }
+
+        private static Texture2D CreateReadableCopy(Texture2D sourceTexture)
+        {
+            var previousActive = RenderTexture.active;
+            var renderTexture = RenderTexture.GetTemporary(sourceTexture.width, sourceTexture.height, 0, RenderTextureFormat.ARGB32, RenderTextureReadWrite.Default);
+            try
+            {
+                Graphics.Blit(sourceTexture, renderTexture);
+                RenderTexture.active = renderTexture;
+
+                var readableTexture = new Texture2D(sourceTexture.width, sourceTexture.height, TextureFormat.RGBA32, false)
+                {
+                    name = sourceTexture.name + "_ReadableCopy",
+                    hideFlags = HideFlags.HideAndDontSave
+                };
+                readableTexture.ReadPixels(new Rect(0, 0, sourceTexture.width, sourceTexture.height), 0, 0);
+                readableTexture.Apply(false, false);
+                return readableTexture;
+            }
+            finally
+            {
+                RenderTexture.active = previousActive;
+                RenderTexture.ReleaseTemporary(renderTexture);
             }
         }
 
