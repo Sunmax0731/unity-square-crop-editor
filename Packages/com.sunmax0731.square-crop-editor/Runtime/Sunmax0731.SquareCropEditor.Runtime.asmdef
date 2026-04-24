@@ -1,0 +1,14 @@
+{
+  "name": "Sunmax0731.SquareCropEditor.Runtime",
+  "rootNamespace": "Sunmax0731.SquareCropEditor",
+  "references": [],
+  "includePlatforms": [],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": [],
+  "versionDefines": [],
+  "noEngineReferences": false
+}

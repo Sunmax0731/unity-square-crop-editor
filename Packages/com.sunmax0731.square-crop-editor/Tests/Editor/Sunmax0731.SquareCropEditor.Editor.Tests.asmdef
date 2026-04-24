@@ -1,0 +1,22 @@
+{
+  "name": "Sunmax0731.SquareCropEditor.Editor.Tests",
+  "rootNamespace": "Sunmax0731.SquareCropEditor.Tests.Editor",
+  "references": [
+    "Sunmax0731.SquareCropEditor.Runtime",
+    "Sunmax0731.SquareCropEditor.Editor"
+  ],
+  "includePlatforms": [
+    "Editor"
+  ],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": false,
+  "defineConstraints": [],
+  "versionDefines": [],
+  "optionalUnityReferences": [
+    "TestAssemblies"
+  ],
+  "noEngineReferences": false
+}
