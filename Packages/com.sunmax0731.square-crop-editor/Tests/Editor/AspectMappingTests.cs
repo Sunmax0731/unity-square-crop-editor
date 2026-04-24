@@ -79,6 +79,20 @@ namespace Sunmax0731.SquareCropEditor.Tests.Editor
         }
 
         [Test]
+        public void ManualInputClampsToBoundsAndTargetRatio()
+        {
+            var selection = CropRectCalculator.FromManualInput(
+                95,
+                95,
+                100,
+                50,
+                new PixelSize(120, 100),
+                AspectRatioSpec.Square);
+
+            Assert.That(selection, Is.EqualTo(new CropSelection(70, 50, 50, 50)));
+        }
+
+        [Test]
         public void FitMapsFullSourceInsideTransparentCanvasArea()
         {
             var plan = AspectOutputPlanner.Plan(
