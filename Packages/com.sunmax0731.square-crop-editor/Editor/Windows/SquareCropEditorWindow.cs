@@ -27,7 +27,8 @@ namespace Sunmax0731.SquareCropEditor.Editor.Windows
         private int _customCropHeight = 1;
         private int _customOutputWidth = 1;
         private int _customOutputHeight = 1;
-        private Vector2 _dragStart;
+        private Vector2 _dragStartLocal;
+        private Rect _dragImageRect;
         private bool _isDragging;
         private string _statusMessage = "Select a source texture.";
         private MessageType _statusType = MessageType.Info;
@@ -219,21 +220,22 @@ namespace Sunmax0731.SquareCropEditor.Editor.Windows
 
             if (currentEvent.type == EventType.MouseDown && currentEvent.button == 0 && imageRect.Contains(currentEvent.mousePosition))
             {
-                _dragStart = currentEvent.mousePosition;
+                _dragImageRect = imageRect;
+                _dragStartLocal = ClampLocalPoint(currentEvent.mousePosition - _dragImageRect.position, _dragImageRect);
                 _isDragging = true;
                 currentEvent.Use();
             }
 
             if (_isDragging && (currentEvent.type == EventType.MouseDrag || currentEvent.type == EventType.MouseUp))
             {
-                var localStart = _dragStart - imageRect.position;
-                var localEnd = currentEvent.mousePosition - imageRect.position;
+                var localStart = ClampLocalPoint(_dragStartLocal, _dragImageRect);
+                var localEnd = ClampLocalPoint(currentEvent.mousePosition - _dragImageRect.position, _dragImageRect);
                 _selection = CropRectCalculator.FromPreviewDrag(
                     localStart.x,
                     localStart.y,
                     localEnd.x,
                     localEnd.y,
-                    new PixelSize(Mathf.RoundToInt(imageRect.width), Mathf.RoundToInt(imageRect.height)),
+                    new PixelSize(Mathf.RoundToInt(_dragImageRect.width), Mathf.RoundToInt(_dragImageRect.height)),
                     new PixelSize(_sourceTexture.width, _sourceTexture.height),
                     GetAspectRatio(_cropPreset, _customCropWidth, _customCropHeight));
                 RefreshOutputPreview();
@@ -245,6 +247,13 @@ namespace Sunmax0731.SquareCropEditor.Editor.Windows
                     _isDragging = false;
                 }
             }
+        }
+
+        private static Vector2 ClampLocalPoint(Vector2 point, Rect imageRect)
+        {
+            return new Vector2(
+                Mathf.Clamp(point.x, 0f, imageRect.width),
+                Mathf.Clamp(point.y, 0f, imageRect.height));
         }
 
         private void DrawSelection(Rect imageRect)

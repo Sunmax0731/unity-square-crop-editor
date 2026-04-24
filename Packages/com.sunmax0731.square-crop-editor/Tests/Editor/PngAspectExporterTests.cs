@@ -88,6 +88,23 @@ namespace Sunmax0731.SquareCropEditor.Tests.Editor
         }
 
         [Test]
+        public void RenderUsesTopLeftSelectionCoordinates()
+        {
+            var source = CreatePositionTexture();
+            var output = PngAspectExporter.Render(
+                source,
+                AspectOutputPlanner.Plan(new CropSelection(1, 0, 2, 2), new PixelSize(2, 2), CanvasMappingMode.Stretch));
+
+            AssertColor(output, 0, 0, Color.red);
+            AssertColor(output, 1, 0, Color.green);
+            AssertColor(output, 0, 1, Color.blue);
+            AssertColor(output, 1, 1, Color.yellow);
+
+            UnityEngine.Object.DestroyImmediate(source);
+            UnityEngine.Object.DestroyImmediate(output);
+        }
+
+        [Test]
         public void SkipConflictDoesNotOverwriteExistingFile()
         {
             var existingPath = Path.Combine(_tempFolder, "icon.png");
@@ -199,6 +216,36 @@ namespace Sunmax0731.SquareCropEditor.Tests.Editor
             texture.SetPixels(pixels);
             texture.Apply();
             return texture;
+        }
+
+        private static Texture2D CreatePositionTexture()
+        {
+            var texture = new Texture2D(4, 4, TextureFormat.RGBA32, false);
+            SetVisualPixel(texture, 1, 0, Color.red);
+            SetVisualPixel(texture, 2, 0, Color.green);
+            SetVisualPixel(texture, 1, 1, Color.blue);
+            SetVisualPixel(texture, 2, 1, Color.yellow);
+            texture.Apply();
+            return texture;
+        }
+
+        private static void AssertColor(Texture2D texture, int visualX, int visualY, Color expected)
+        {
+            var actual = GetVisualPixel(texture, visualX, visualY);
+            Assert.That(actual.r, Is.EqualTo(expected.r).Within(0.001f));
+            Assert.That(actual.g, Is.EqualTo(expected.g).Within(0.001f));
+            Assert.That(actual.b, Is.EqualTo(expected.b).Within(0.001f));
+            Assert.That(actual.a, Is.EqualTo(expected.a).Within(0.001f));
+        }
+
+        private static Color GetVisualPixel(Texture2D texture, int visualX, int visualY)
+        {
+            return texture.GetPixel(visualX, texture.height - 1 - visualY);
+        }
+
+        private static void SetVisualPixel(Texture2D texture, int visualX, int visualY, Color color)
+        {
+            texture.SetPixel(visualX, texture.height - 1 - visualY, color);
         }
 
         private static Texture2D LoadPng(string path)
