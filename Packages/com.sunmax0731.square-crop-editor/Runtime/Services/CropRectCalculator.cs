@@ -51,6 +51,25 @@ namespace Sunmax0731.SquareCropEditor.Services
             int y,
             int width,
             int height,
+            PixelSize sourceSize)
+        {
+            if (!sourceSize.IsValid)
+            {
+                throw new ArgumentOutOfRangeException(nameof(sourceSize), "Source size must be positive.");
+            }
+
+            var clampedWidth = Math.Max(1, Math.Min(width, sourceSize.Width));
+            var clampedHeight = Math.Max(1, Math.Min(height, sourceSize.Height));
+            var clampedX = Math.Max(0, Math.Min(x, sourceSize.Width - clampedWidth));
+            var clampedY = Math.Max(0, Math.Min(y, sourceSize.Height - clampedHeight));
+            return new CropSelection(clampedX, clampedY, clampedWidth, clampedHeight);
+        }
+
+        public static CropSelection FromManualInput(
+            int x,
+            int y,
+            int width,
+            int height,
             PixelSize sourceSize,
             AspectRatioSpec aspectRatio)
         {
@@ -93,6 +112,46 @@ namespace Sunmax0731.SquareCropEditor.Services
             var clampedY = Math.Max(0, Math.Min(y, sourceSize.Height - clampedHeight));
 
             return new CropSelection(clampedX, clampedY, clampedWidth, clampedHeight);
+        }
+
+        public static CropSelection FromPreviewDrag(
+            double startX,
+            double startY,
+            double endX,
+            double endY,
+            PixelSize previewSize,
+            PixelSize sourceSize)
+        {
+            if (!previewSize.IsValid)
+            {
+                throw new ArgumentOutOfRangeException(nameof(previewSize), "Preview size must be positive.");
+            }
+
+            if (!sourceSize.IsValid)
+            {
+                throw new ArgumentOutOfRangeException(nameof(sourceSize), "Source size must be positive.");
+            }
+
+            var sourceStartX = Clamp(startX * sourceSize.Width / previewSize.Width, 0, sourceSize.Width);
+            var sourceStartY = Clamp(startY * sourceSize.Height / previewSize.Height, 0, sourceSize.Height);
+            var sourceEndX = Clamp(endX * sourceSize.Width / previewSize.Width, 0, sourceSize.Width);
+            var sourceEndY = Clamp(endY * sourceSize.Height / previewSize.Height, 0, sourceSize.Height);
+
+            var x = Math.Min(sourceStartX, sourceEndX);
+            var y = Math.Min(sourceStartY, sourceEndY);
+            var width = Math.Abs(sourceEndX - sourceStartX);
+            var height = Math.Abs(sourceEndY - sourceStartY);
+
+            if (width <= 0 && height <= 0)
+            {
+                return new CropSelection((int)Math.Round(sourceStartX), (int)Math.Round(sourceStartY), 0, 0);
+            }
+
+            var roundedWidth = Math.Max(1, (int)Math.Round(width));
+            var roundedHeight = Math.Max(1, (int)Math.Round(height));
+            var roundedX = Math.Max(0, Math.Min((int)Math.Round(x), sourceSize.Width - roundedWidth));
+            var roundedY = Math.Max(0, Math.Min((int)Math.Round(y), sourceSize.Height - roundedHeight));
+            return new CropSelection(roundedX, roundedY, roundedWidth, roundedHeight);
         }
 
         public static CropSelection FromPreviewDrag(

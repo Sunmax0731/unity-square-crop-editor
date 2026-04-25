@@ -61,6 +61,20 @@ namespace Sunmax0731.SquareCropEditor.Tests.Editor
         }
 
         [Test]
+        public void FreeCropDragDoesNotConstrainAspectRatio()
+        {
+            var selection = CropRectCalculator.FromPreviewDrag(
+                10,
+                10,
+                90,
+                50,
+                new PixelSize(100, 100),
+                new PixelSize(200, 200));
+
+            Assert.That(selection, Is.EqualTo(new CropSelection(20, 20, 160, 80)));
+        }
+
+        [Test]
         public void FullSourceUsesEntireSourceBounds()
         {
             var selection = CropRectCalculator.FullSource(new PixelSize(320, 180));
@@ -90,6 +104,19 @@ namespace Sunmax0731.SquareCropEditor.Tests.Editor
                 AspectRatioSpec.Square);
 
             Assert.That(selection, Is.EqualTo(new CropSelection(70, 50, 50, 50)));
+        }
+
+        [Test]
+        public void FreeManualInputKeepsIndependentWidthAndHeight()
+        {
+            var selection = CropRectCalculator.FromManualInput(
+                95,
+                95,
+                100,
+                50,
+                new PixelSize(120, 100));
+
+            Assert.That(selection, Is.EqualTo(new CropSelection(20, 50, 100, 50)));
         }
 
         [Test]
