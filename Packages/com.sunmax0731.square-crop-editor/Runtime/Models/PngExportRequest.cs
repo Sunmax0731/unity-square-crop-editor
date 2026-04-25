@@ -12,6 +12,8 @@ namespace Sunmax0731.SquareCropEditor.Models
 
         public int OutputLongEdge { get; set; } = SquareCropSettings.DefaultOutputSize;
 
+        public int OutputPadding { get; set; }
+
         public AspectRatioSpec OutputAspectRatio { get; set; } = AspectRatioSpec.Square;
 
         public CanvasMappingMode MappingMode { get; set; } = CanvasMappingMode.Fit;

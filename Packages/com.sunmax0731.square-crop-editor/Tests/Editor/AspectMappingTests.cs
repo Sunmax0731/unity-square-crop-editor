@@ -144,6 +144,20 @@ namespace Sunmax0731.SquareCropEditor.Tests.Editor
         }
 
         [Test]
+        public void FitMapsSelectionInsideOutputPadding()
+        {
+            var plan = AspectOutputPlanner.Plan(
+                new CropSelection(0, 0, 200, 100),
+                new PixelSize(256, 256),
+                CanvasMappingMode.Fit,
+                16);
+
+            Assert.That(plan.OutputSize, Is.EqualTo(new PixelSize(256, 256)));
+            Assert.That(plan.SourceRect, Is.EqualTo(new CropSelection(0, 0, 200, 100)));
+            Assert.That(plan.DestinationRect, Is.EqualTo(new CropSelection(16, 72, 224, 112)));
+        }
+
+        [Test]
         public void FillCropsSourceToOutputRatio()
         {
             var plan = AspectOutputPlanner.Plan(
@@ -156,6 +170,19 @@ namespace Sunmax0731.SquareCropEditor.Tests.Editor
         }
 
         [Test]
+        public void FillUsesPaddedContentArea()
+        {
+            var plan = AspectOutputPlanner.Plan(
+                new CropSelection(0, 0, 200, 100),
+                new PixelSize(256, 256),
+                CanvasMappingMode.Fill,
+                16);
+
+            Assert.That(plan.SourceRect, Is.EqualTo(new CropSelection(50, 0, 100, 100)));
+            Assert.That(plan.DestinationRect, Is.EqualTo(new CropSelection(16, 16, 224, 224)));
+        }
+
+        [Test]
         public void StretchUsesFullSourceAndFullCanvas()
         {
             var plan = AspectOutputPlanner.Plan(
@@ -165,6 +192,31 @@ namespace Sunmax0731.SquareCropEditor.Tests.Editor
 
             Assert.That(plan.SourceRect, Is.EqualTo(new CropSelection(10, 20, 200, 100)));
             Assert.That(plan.DestinationRect, Is.EqualTo(new CropSelection(0, 0, 256, 144)));
+        }
+
+        [Test]
+        public void StretchUsesPaddedContentArea()
+        {
+            var plan = AspectOutputPlanner.Plan(
+                new CropSelection(10, 20, 200, 100),
+                new PixelSize(256, 144),
+                CanvasMappingMode.Stretch,
+                12);
+
+            Assert.That(plan.SourceRect, Is.EqualTo(new CropSelection(10, 20, 200, 100)));
+            Assert.That(plan.DestinationRect, Is.EqualTo(new CropSelection(12, 12, 232, 120)));
+        }
+
+        [Test]
+        public void PaddingIsClampedToKeepContentAreaPositive()
+        {
+            var plan = AspectOutputPlanner.Plan(
+                new CropSelection(0, 0, 10, 10),
+                new PixelSize(16, 16),
+                CanvasMappingMode.Stretch,
+                100);
+
+            Assert.That(plan.DestinationRect, Is.EqualTo(new CropSelection(7, 7, 2, 2)));
         }
     }
 }

@@ -27,16 +27,26 @@ namespace Sunmax0731.SquareCropEditor.Services
 
         public static OutputMappingPlan Plan(CropSelection selection, int outputLongEdge, AspectRatioSpec outputAspectRatio, CanvasMappingMode mappingMode)
         {
+            return Plan(selection, outputLongEdge, outputAspectRatio, mappingMode, 0);
+        }
+
+        public static OutputMappingPlan Plan(CropSelection selection, int outputLongEdge, AspectRatioSpec outputAspectRatio, CanvasMappingMode mappingMode, int outputPadding)
+        {
             if (!selection.IsValid)
             {
                 throw new ArgumentOutOfRangeException(nameof(selection), "Selection must be positive.");
             }
 
             var outputSize = CalculateOutputSize(outputLongEdge, outputAspectRatio);
-            return Plan(selection, outputSize, mappingMode);
+            return Plan(selection, outputSize, mappingMode, outputPadding);
         }
 
         public static OutputMappingPlan Plan(CropSelection selection, PixelSize outputSize, CanvasMappingMode mappingMode)
+        {
+            return Plan(selection, outputSize, mappingMode, 0);
+        }
+
+        public static OutputMappingPlan Plan(CropSelection selection, PixelSize outputSize, CanvasMappingMode mappingMode, int outputPadding)
         {
             if (!selection.IsValid)
             {
@@ -48,30 +58,42 @@ namespace Sunmax0731.SquareCropEditor.Services
                 throw new ArgumentOutOfRangeException(nameof(outputSize), "Output size must be positive.");
             }
 
+            var contentRect = CalculateContentRect(outputSize, outputPadding);
             switch (mappingMode)
             {
                 case CanvasMappingMode.Fit:
-                    return PlanFit(selection, outputSize);
+                    return PlanFit(selection, outputSize, contentRect);
                 case CanvasMappingMode.Fill:
-                    return PlanFill(selection, outputSize);
+                    return PlanFill(selection, outputSize, contentRect);
                 case CanvasMappingMode.Stretch:
                     return new OutputMappingPlan(
                         outputSize,
                         selection,
-                        new CropSelection(0, 0, outputSize.Width, outputSize.Height),
+                        contentRect,
                         CanvasMappingMode.Stretch);
                 default:
                     throw new ArgumentOutOfRangeException(nameof(mappingMode), mappingMode, "Unsupported mapping mode.");
             }
         }
 
-        private static OutputMappingPlan PlanFit(CropSelection selection, PixelSize outputSize)
+        private static CropSelection CalculateContentRect(PixelSize outputSize, int outputPadding)
         {
-            var scale = Math.Min((double)outputSize.Width / selection.Width, (double)outputSize.Height / selection.Height);
+            var maxPadding = Math.Max(0, Math.Min((outputSize.Width - 1) / 2, (outputSize.Height - 1) / 2));
+            var padding = Math.Min(Math.Max(0, outputPadding), maxPadding);
+            return new CropSelection(
+                padding,
+                padding,
+                outputSize.Width - padding * 2,
+                outputSize.Height - padding * 2);
+        }
+
+        private static OutputMappingPlan PlanFit(CropSelection selection, PixelSize outputSize, CropSelection contentRect)
+        {
+            var scale = Math.Min((double)contentRect.Width / selection.Width, (double)contentRect.Height / selection.Height);
             var destinationWidth = Math.Max(1, (int)Math.Round(selection.Width * scale));
             var destinationHeight = Math.Max(1, (int)Math.Round(selection.Height * scale));
-            var destinationX = (outputSize.Width - destinationWidth) / 2;
-            var destinationY = (outputSize.Height - destinationHeight) / 2;
+            var destinationX = contentRect.X + (contentRect.Width - destinationWidth) / 2;
+            var destinationY = contentRect.Y + (contentRect.Height - destinationHeight) / 2;
 
             return new OutputMappingPlan(
                 outputSize,
@@ -80,9 +102,9 @@ namespace Sunmax0731.SquareCropEditor.Services
                 CanvasMappingMode.Fit);
         }
 
-        private static OutputMappingPlan PlanFill(CropSelection selection, PixelSize outputSize)
+        private static OutputMappingPlan PlanFill(CropSelection selection, PixelSize outputSize, CropSelection contentRect)
         {
-            var outputRatio = (double)outputSize.Width / outputSize.Height;
+            var outputRatio = (double)contentRect.Width / contentRect.Height;
             var sourceRatio = (double)selection.Width / selection.Height;
 
             var sourceX = selection.X;
@@ -104,7 +126,7 @@ namespace Sunmax0731.SquareCropEditor.Services
             return new OutputMappingPlan(
                 outputSize,
                 new CropSelection(sourceX, sourceY, sourceWidth, sourceHeight),
-                new CropSelection(0, 0, outputSize.Width, outputSize.Height),
+                contentRect,
                 CanvasMappingMode.Fill);
         }
     }

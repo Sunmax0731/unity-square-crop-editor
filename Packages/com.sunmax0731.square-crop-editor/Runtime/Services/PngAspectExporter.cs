@@ -26,7 +26,7 @@ namespace Sunmax0731.SquareCropEditor.Services
 
             try
             {
-                var plan = AspectOutputPlanner.Plan(request.Selection, outputSize, request.MappingMode);
+                var plan = AspectOutputPlanner.Plan(request.Selection, outputSize, request.MappingMode, request.OutputPadding);
                 var outputTexture = Render(request.SourceTexture, plan);
                 var pngBytes = ImageConversion.EncodeToPNG(outputTexture);
                 UnityEngine.Object.DestroyImmediate(outputTexture);
@@ -107,6 +107,11 @@ namespace Sunmax0731.SquareCropEditor.Services
             if (request.OutputLongEdge <= 0)
             {
                 return "Output size must be positive.";
+            }
+
+            if (request.OutputPadding < 0)
+            {
+                return "Output padding must be zero or greater.";
             }
 
             if (!request.OutputAspectRatio.IsValid)

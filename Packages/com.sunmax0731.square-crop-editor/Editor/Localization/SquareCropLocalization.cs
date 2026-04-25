@@ -23,6 +23,7 @@ namespace Sunmax0731.SquareCropEditor.Editor.Localization
             ["cropRatio"] = "Crop比率",
             ["outputRatio"] = "Output比率",
             ["outputLongEdge"] = "Output長辺",
+            ["outputPadding"] = "Output余白",
             ["mapping"] = "配置",
             ["conflict"] = "競合",
             ["outputFolder"] = "出力フォルダ",

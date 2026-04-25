@@ -15,6 +15,8 @@ namespace Sunmax0731.SquareCropEditor.Models
 
         public int OutputSize { get; set; } = DefaultOutputSize;
 
+        public int OutputPadding { get; set; }
+
         public CanvasMappingMode MappingMode { get; set; } = CanvasMappingMode.Fit;
 
         public string OutputFolder { get; set; } = DefaultOutputFolder;

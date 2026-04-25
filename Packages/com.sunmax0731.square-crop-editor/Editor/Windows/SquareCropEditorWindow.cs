@@ -293,6 +293,7 @@ namespace Sunmax0731.SquareCropEditor.Editor.Windows
         private void DrawOutputControls()
         {
             _settings.OutputSize = Mathf.Max(1, EditorGUILayout.IntField(T("outputLongEdge", "Output Long Edge"), _settings.OutputSize));
+            _settings.OutputPadding = Mathf.Max(0, EditorGUILayout.IntField(T("outputPadding", "Output Padding"), _settings.OutputPadding));
             _settings.MappingMode = (CanvasMappingMode)EditorGUILayout.EnumPopup(T("mapping", "Mapping"), _settings.MappingMode);
             _settings.ConflictBehavior = (ExportConflictBehavior)EditorGUILayout.EnumPopup(T("conflict", "Conflict"), _settings.ConflictBehavior);
 
@@ -606,7 +607,7 @@ namespace Sunmax0731.SquareCropEditor.Editor.Windows
                 try
                 {
                     var outputSize = AspectOutputPlanner.CalculateOutputSize(_settings.OutputSize, GetAspectRatio(_outputPreset, _customOutputWidth, _customOutputHeight));
-                    var plan = AspectOutputPlanner.Plan(_selection, outputSize, _settings.MappingMode);
+                    var plan = AspectOutputPlanner.Plan(_selection, outputSize, _settings.MappingMode, _settings.OutputPadding);
                     _outputPreview = PngAspectExporter.Render(readable.Texture, plan);
                     SetStatus(readable.OwnsTexture
                         ? TFormat("status.selectionTemporaryReadable", "Selection: {0} x {1}. Using temporary readable copy.", _selection.Width, _selection.Height)
@@ -646,6 +647,7 @@ namespace Sunmax0731.SquareCropEditor.Editor.Windows
                     SourceTexture = readable.Texture,
                     Selection = _selection,
                     OutputLongEdge = _settings.OutputSize,
+                    OutputPadding = _settings.OutputPadding,
                     OutputAspectRatio = GetAspectRatio(_outputPreset, _customOutputWidth, _customOutputHeight),
                     MappingMode = _settings.MappingMode,
                     OutputFolder = _settings.OutputFolder,
@@ -684,6 +686,7 @@ namespace Sunmax0731.SquareCropEditor.Editor.Windows
             var message = new StringBuilder()
                 .AppendLine($"{T("dialog.output", "Output")}: {outputSize.Width} x {outputSize.Height}")
                 .AppendLine($"{T("dialog.selection", "Selection")}: {_selection.X}, {_selection.Y}, {_selection.Width} x {_selection.Height}")
+                .AppendLine($"{T("outputPadding", "Output Padding")}: {_settings.OutputPadding}px")
                 .AppendLine($"{T("dialog.mapping", "Mapping")}: {_settings.MappingMode}")
                 .AppendLine($"{T("dialog.conflict", "Conflict")}: {_settings.ConflictBehavior}")
                 .AppendLine()
