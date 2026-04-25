@@ -194,9 +194,12 @@ namespace Sunmax0731.SquareCropEditor.Editor.Windows
 
                     if (GUILayout.Button("Center Crop"))
                     {
-                        _selection = CropRectCalculator.CenterCrop(
-                            new PixelSize(_sourceTexture.width, _sourceTexture.height),
-                            GetAspectRatio(_cropPreset, _customCropWidth, _customCropHeight));
+                        var sourceSize = new PixelSize(_sourceTexture.width, _sourceTexture.height);
+                        _selection = _cropPreset == AspectPreset.Free
+                            ? CropRectCalculator.FullSource(sourceSize)
+                            : CropRectCalculator.CenterCrop(
+                                sourceSize,
+                                GetAspectRatio(_cropPreset, _customCropWidth, _customCropHeight));
                         RefreshOutputPreview();
                     }
                 }
@@ -219,13 +222,16 @@ namespace Sunmax0731.SquareCropEditor.Editor.Windows
 
                         if (change.changed)
                         {
-                            _selection = CropRectCalculator.FromManualInput(
-                                x,
-                                y,
-                                width,
-                                height,
-                                new PixelSize(_sourceTexture.width, _sourceTexture.height),
-                                GetAspectRatio(_cropPreset, _customCropWidth, _customCropHeight));
+                            var sourceSize = new PixelSize(_sourceTexture.width, _sourceTexture.height);
+                            _selection = _cropPreset == AspectPreset.Free
+                                ? CropRectCalculator.FromManualInput(x, y, width, height, sourceSize)
+                                : CropRectCalculator.FromManualInput(
+                                    x,
+                                    y,
+                                    width,
+                                    height,
+                                    sourceSize,
+                                    GetAspectRatio(_cropPreset, _customCropWidth, _customCropHeight));
                             RefreshOutputPreview();
                         }
                     }
@@ -356,14 +362,24 @@ namespace Sunmax0731.SquareCropEditor.Editor.Windows
                 var clampedMousePosition = ClampPointToRect(currentEvent.mousePosition, previewRect);
                 var localStart = ClampLocalPoint(_dragStartLocal, _dragImageRect);
                 var localEnd = ClampLocalPoint(clampedMousePosition - _dragImageRect.position, _dragImageRect);
-                _selection = CropRectCalculator.FromPreviewDrag(
-                    localStart.x,
-                    localStart.y,
-                    localEnd.x,
-                    localEnd.y,
-                    new PixelSize(Mathf.RoundToInt(_dragImageRect.width), Mathf.RoundToInt(_dragImageRect.height)),
-                    new PixelSize(_sourceTexture.width, _sourceTexture.height),
-                    GetAspectRatio(_cropPreset, _customCropWidth, _customCropHeight));
+                var previewSize = new PixelSize(Mathf.RoundToInt(_dragImageRect.width), Mathf.RoundToInt(_dragImageRect.height));
+                var sourceSize = new PixelSize(_sourceTexture.width, _sourceTexture.height);
+                _selection = _cropPreset == AspectPreset.Free
+                    ? CropRectCalculator.FromPreviewDrag(
+                        localStart.x,
+                        localStart.y,
+                        localEnd.x,
+                        localEnd.y,
+                        previewSize,
+                        sourceSize)
+                    : CropRectCalculator.FromPreviewDrag(
+                        localStart.x,
+                        localStart.y,
+                        localEnd.x,
+                        localEnd.y,
+                        previewSize,
+                        sourceSize,
+                        GetAspectRatio(_cropPreset, _customCropWidth, _customCropHeight));
                 RefreshOutputPreview();
                 Repaint();
                 currentEvent.Use();
@@ -536,6 +552,8 @@ namespace Sunmax0731.SquareCropEditor.Editor.Windows
                     return AspectRatioSpec.Portrait9By16;
                 case AspectPreset.Custom:
                     return new AspectRatioSpec(Mathf.Max(1, customWidth), Mathf.Max(1, customHeight));
+                case AspectPreset.Free:
+                    return AspectRatioSpec.Square;
                 default:
                     return AspectRatioSpec.Square;
             }
@@ -687,6 +705,7 @@ namespace Sunmax0731.SquareCropEditor.Editor.Windows
 
         private enum AspectPreset
         {
+            Free,
             Square,
             Landscape4By3,
             Portrait3By4,
