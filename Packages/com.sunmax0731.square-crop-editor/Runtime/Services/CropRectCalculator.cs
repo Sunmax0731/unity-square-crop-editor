@@ -114,6 +114,25 @@ namespace Sunmax0731.SquareCropEditor.Services
             return new CropSelection(clampedX, clampedY, clampedWidth, clampedHeight);
         }
 
+        public static CropSelection MoveSelection(CropSelection selection, PixelSize sourceSize, double deltaX, double deltaY)
+        {
+            if (!selection.IsValid)
+            {
+                throw new ArgumentOutOfRangeException(nameof(selection), "Selection must be positive.");
+            }
+
+            if (!sourceSize.IsValid)
+            {
+                throw new ArgumentOutOfRangeException(nameof(sourceSize), "Source size must be positive.");
+            }
+
+            var x = (int)Math.Round(selection.X + deltaX);
+            var y = (int)Math.Round(selection.Y + deltaY);
+            x = Math.Max(0, Math.Min(x, sourceSize.Width - selection.Width));
+            y = Math.Max(0, Math.Min(y, sourceSize.Height - selection.Height));
+            return new CropSelection(x, y, selection.Width, selection.Height);
+        }
+
         public static CropSelection FromPreviewDrag(
             double startX,
             double startY,
