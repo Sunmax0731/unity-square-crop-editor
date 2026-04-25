@@ -2,6 +2,7 @@ using System;
 using System.IO;
 using System.Text;
 using Sunmax0731.SquareCropEditor.Editor.Export;
+using Sunmax0731.SquareCropEditor.Editor.Localization;
 using Sunmax0731.SquareCropEditor.Models;
 using Sunmax0731.SquareCropEditor.Services;
 using UnityEditor;
@@ -14,6 +15,7 @@ namespace Sunmax0731.SquareCropEditor.Editor.Windows
         public const string WindowTitle = "Square Crop Editor";
 
         private const int MinPreviewHeight = 280;
+        private const string LanguageModePrefsKey = "Sunmax.SquareCropEditor.LanguageMode";
         private static readonly Color SelectionColor = new Color(0.2f, 0.65f, 1f, 0.95f);
         private static readonly Color SelectionFillColor = new Color(0.2f, 0.65f, 1f, 0.16f);
 
@@ -35,8 +37,11 @@ namespace Sunmax0731.SquareCropEditor.Editor.Windows
         private float _sourceZoom = 1f;
         private Vector2 _sourcePan;
         private bool _isDragging;
-        private string _statusMessage = "Select a source texture.";
+        private string _statusMessage;
         private MessageType _statusType = MessageType.Info;
+        private SquareCropLanguageMode _languageMode = SquareCropLanguageMode.Auto;
+        private SquareCropDisplayLanguage _displayLanguage = SquareCropDisplayLanguage.English;
+        private ParameterHelpWindow _parameterHelpWindow;
 
         [MenuItem(SquareCropDefaults.MenuPath)]
         public static void Open()
@@ -55,10 +60,21 @@ namespace Sunmax0731.SquareCropEditor.Editor.Windows
             }
 
             _checkerboard = CreateCheckerboardTexture();
+            LoadLanguageMode();
+            if (string.IsNullOrEmpty(_statusMessage))
+            {
+                SetStatus(T("status.selectSource", "Select a source texture."), MessageType.Info);
+            }
         }
 
         private void OnDisable()
         {
+            if (_parameterHelpWindow != null)
+            {
+                _parameterHelpWindow.SetOwner(null);
+                _parameterHelpWindow = null;
+            }
+
             DestroyPreviewTexture();
             if (_checkerboard != null)
             {
@@ -71,7 +87,7 @@ namespace Sunmax0731.SquareCropEditor.Editor.Windows
         {
             _settings ??= SquareCropDefaults.CreateSettings();
 
-            EditorGUILayout.LabelField(WindowTitle, EditorStyles.boldLabel);
+            DrawToolbar();
             EditorGUILayout.HelpBox(_statusMessage, _statusType);
 
             using (var change = new EditorGUI.ChangeCheckScope())
@@ -92,10 +108,55 @@ namespace Sunmax0731.SquareCropEditor.Editor.Windows
             DrawExportButton();
         }
 
+        private void DrawToolbar()
+        {
+            using (new EditorGUILayout.HorizontalScope(EditorStyles.toolbar))
+            {
+                EditorGUILayout.LabelField(T("windowTitle", WindowTitle), EditorStyles.boldLabel, GUILayout.MinWidth(160));
+                GUILayout.FlexibleSpace();
+                if (GUILayout.Button(T("help", "Help"), EditorStyles.toolbarButton, GUILayout.Width(56)))
+                {
+                    OpenHelpWindow();
+                }
+
+                DrawLanguagePopup();
+            }
+        }
+
+        private void DrawLanguagePopup()
+        {
+            var modes = (SquareCropLanguageMode[])Enum.GetValues(typeof(SquareCropLanguageMode));
+            var labels = new GUIContent[modes.Length];
+            var selectedIndex = 0;
+            for (var i = 0; i < modes.Length; i++)
+            {
+                labels[i] = new GUIContent(SquareCropLocalization.GetLanguageModeLabel(_displayLanguage, modes[i]));
+                if (modes[i] == _languageMode)
+                {
+                    selectedIndex = i;
+                }
+            }
+
+            EditorGUILayout.LabelField(T("language", "Language"), EditorStyles.miniLabel, GUILayout.Width(58));
+            using (var change = new EditorGUI.ChangeCheckScope())
+            {
+                selectedIndex = EditorGUILayout.Popup(selectedIndex, labels, EditorStyles.toolbarPopup, GUILayout.Width(92));
+                if (change.changed)
+                {
+                    _languageMode = modes[selectedIndex];
+                    _displayLanguage = SquareCropLocalization.ResolveLanguage(_languageMode);
+                    EditorPrefs.SetInt(LanguageModePrefsKey, (int)_languageMode);
+                    titleContent = new GUIContent(T("windowTitle", WindowTitle));
+                    Repaint();
+                    _parameterHelpWindow?.Repaint();
+                }
+            }
+        }
+
         private void DrawSourceControls()
         {
             EditorGUILayout.Space(4);
-            var texture = (Texture2D)EditorGUILayout.ObjectField("Source Image", _sourceTexture, typeof(Texture2D), false);
+            var texture = (Texture2D)EditorGUILayout.ObjectField(T("sourceImage", "Source Image"), _sourceTexture, typeof(Texture2D), false);
             if (texture != _sourceTexture)
             {
                 _sourceTexture = texture;
@@ -106,16 +167,16 @@ namespace Sunmax0731.SquareCropEditor.Editor.Windows
                     _settings.OutputFileName = Path.GetFileNameWithoutExtension(AssetDatabase.GetAssetPath(_sourceTexture)) + SquareCropSettings.DefaultFileNameSuffix + ".png";
                     if (TextureReadbackService.CanReadPixels(_sourceTexture))
                     {
-                        SetStatus($"Source: {_sourceTexture.width} x {_sourceTexture.height}", MessageType.Info);
+                        SetStatus(TFormat("status.sourceReadable", "Source: {0} x {1}", _sourceTexture.width, _sourceTexture.height), MessageType.Info);
                     }
                     else
                     {
-                        SetStatus("Source texture is not directly readable. Preview/export will use a temporary readable copy when possible.", MessageType.Warning);
+                        SetStatus(T("status.sourceTemporaryReadable", "Source texture is not directly readable. Preview/export will use a temporary readable copy when possible."), MessageType.Warning);
                     }
                 }
                 else
                 {
-                    SetStatus("Select a source texture.", MessageType.Info);
+                    SetStatus(T("status.selectSource", "Select a source texture."), MessageType.Info);
                 }
             }
         }
@@ -124,7 +185,7 @@ namespace Sunmax0731.SquareCropEditor.Editor.Windows
         {
             using (new EditorGUILayout.HorizontalScope())
             {
-                _cropPreset = (AspectPreset)EditorGUILayout.EnumPopup("Crop Ratio", _cropPreset);
+                _cropPreset = (AspectPreset)EditorGUILayout.EnumPopup(T("cropRatio", "Crop Ratio"), _cropPreset);
                 if (_cropPreset == AspectPreset.Custom)
                 {
                     _customCropWidth = Mathf.Max(1, EditorGUILayout.IntField(_customCropWidth, GUILayout.Width(48)));
@@ -135,7 +196,7 @@ namespace Sunmax0731.SquareCropEditor.Editor.Windows
 
             using (new EditorGUILayout.HorizontalScope())
             {
-                _outputPreset = (AspectPreset)EditorGUILayout.EnumPopup("Output Ratio", _outputPreset);
+                _outputPreset = (AspectPreset)EditorGUILayout.EnumPopup(T("outputRatio", "Output Ratio"), _outputPreset);
                 if (_outputPreset == AspectPreset.Custom)
                 {
                     _customOutputWidth = Mathf.Max(1, EditorGUILayout.IntField(_customOutputWidth, GUILayout.Width(48)));
@@ -147,19 +208,19 @@ namespace Sunmax0731.SquareCropEditor.Editor.Windows
 
         private void DrawOutputControls()
         {
-            _settings.OutputSize = Mathf.Max(1, EditorGUILayout.IntField("Output Long Edge", _settings.OutputSize));
-            _settings.MappingMode = (CanvasMappingMode)EditorGUILayout.EnumPopup("Mapping", _settings.MappingMode);
-            _settings.ConflictBehavior = (ExportConflictBehavior)EditorGUILayout.EnumPopup("Conflict", _settings.ConflictBehavior);
+            _settings.OutputSize = Mathf.Max(1, EditorGUILayout.IntField(T("outputLongEdge", "Output Long Edge"), _settings.OutputSize));
+            _settings.MappingMode = (CanvasMappingMode)EditorGUILayout.EnumPopup(T("mapping", "Mapping"), _settings.MappingMode);
+            _settings.ConflictBehavior = (ExportConflictBehavior)EditorGUILayout.EnumPopup(T("conflict", "Conflict"), _settings.ConflictBehavior);
 
             using (new EditorGUILayout.HorizontalScope())
             {
-                _settings.OutputFolder = EditorGUILayout.TextField("Output Folder", _settings.OutputFolder);
-                if (GUILayout.Button("Select", GUILayout.Width(64)))
+                _settings.OutputFolder = EditorGUILayout.TextField(T("outputFolder", "Output Folder"), _settings.OutputFolder);
+                if (GUILayout.Button(T("select", "Select"), GUILayout.Width(64)))
                 {
                     SelectOutputFolder();
                 }
 
-                if (GUILayout.Button("Default", GUILayout.Width(64)))
+                if (GUILayout.Button(T("default", "Default"), GUILayout.Width(64)))
                 {
                     _settings.OutputFolder = SquareCropSettings.DefaultOutputFolder;
                 }
@@ -167,7 +228,7 @@ namespace Sunmax0731.SquareCropEditor.Editor.Windows
 
             using (new EditorGUILayout.HorizontalScope())
             {
-                _settings.OutputFileName = EditorGUILayout.TextField("Output File", _settings.OutputFileName);
+                _settings.OutputFileName = EditorGUILayout.TextField(T("outputFile", "Output File"), _settings.OutputFileName);
                 if (GUILayout.Button(".png", GUILayout.Width(48)))
                 {
                     _settings.OutputFileName = EnsurePngExtension(_settings.OutputFileName);
@@ -181,20 +242,20 @@ namespace Sunmax0731.SquareCropEditor.Editor.Windows
             {
                 using (new EditorGUI.DisabledScope(_sourceTexture == null))
                 {
-                    if (GUILayout.Button("Reset Selection"))
+                    if (GUILayout.Button(T("resetSelection", "Reset Selection")))
                     {
                         _selection = default;
                         DestroyPreviewTexture();
-                        SetStatus("Selection reset.", MessageType.Info);
+                        SetStatus(T("status.selectionReset", "Selection reset."), MessageType.Info);
                     }
 
-                    if (GUILayout.Button("Use Full Source"))
+                    if (GUILayout.Button(T("useFullSource", "Use Full Source")))
                     {
                         _selection = CropRectCalculator.FullSource(new PixelSize(_sourceTexture.width, _sourceTexture.height));
                         RefreshOutputPreview();
                     }
 
-                    if (GUILayout.Button("Center Crop"))
+                    if (GUILayout.Button(T("centerCrop", "Center Crop")))
                     {
                         var sourceSize = new PixelSize(_sourceTexture.width, _sourceTexture.height);
                         _selection = _cropPreset == AspectPreset.Free
@@ -214,7 +275,7 @@ namespace Sunmax0731.SquareCropEditor.Editor.Windows
             {
                 using (new EditorGUI.DisabledScope(_sourceTexture == null || !_selection.IsValid))
                 {
-                    EditorGUILayout.LabelField("Selection", GUILayout.Width(64));
+                    EditorGUILayout.LabelField(T("selection", "Selection"), GUILayout.Width(64));
                     using (var change = new EditorGUI.ChangeCheckScope())
                     {
                         var x = EditorGUILayout.IntField("X", _selection.IsValid ? _selection.X : 0, GUILayout.MaxWidth(96));
@@ -255,14 +316,14 @@ namespace Sunmax0731.SquareCropEditor.Editor.Windows
         {
             using (new EditorGUILayout.VerticalScope(GUILayout.MinWidth(position.width * 0.58f)))
             {
-                EditorGUILayout.LabelField("Source", EditorStyles.boldLabel);
+                EditorGUILayout.LabelField(T("source", "Source"), EditorStyles.boldLabel);
                 DrawSourceViewControls();
                 var previewRect = GUILayoutUtility.GetRect(10, 10000, MinPreviewHeight, MinPreviewHeight, GUILayout.ExpandWidth(true));
                 EditorGUI.DrawRect(previewRect, new Color(0.13f, 0.13f, 0.13f));
 
                 if (_sourceTexture == null)
                 {
-                    DrawCenteredLabel(previewRect, "No source image");
+                    DrawCenteredLabel(previewRect, T("noSourceImage", "No source image"));
                     return;
                 }
 
@@ -287,7 +348,7 @@ namespace Sunmax0731.SquareCropEditor.Editor.Windows
             {
                 using (new EditorGUI.DisabledScope(_sourceTexture == null))
                 {
-                    _sourceZoom = EditorGUILayout.Slider("Zoom", _sourceZoom, 1f, 8f);
+                    _sourceZoom = EditorGUILayout.Slider(T("zoom", "Zoom"), _sourceZoom, 1f, 8f);
                     if (GUILayout.Button("1:1", GUILayout.Width(44)))
                     {
                         _sourceZoom = 1f;
@@ -300,8 +361,8 @@ namespace Sunmax0731.SquareCropEditor.Editor.Windows
             {
                 using (new EditorGUI.DisabledScope(_sourceTexture == null || _sourceZoom <= 1f))
                 {
-                    _sourcePan.x = EditorGUILayout.Slider("Pan X", _sourcePan.x, -1f, 1f);
-                    _sourcePan.y = EditorGUILayout.Slider("Pan Y", _sourcePan.y, -1f, 1f);
+                    _sourcePan.x = EditorGUILayout.Slider(T("panX", "Pan X"), _sourcePan.x, -1f, 1f);
+                    _sourcePan.y = EditorGUILayout.Slider(T("panY", "Pan Y"), _sourcePan.y, -1f, 1f);
                 }
             }
 
@@ -315,13 +376,13 @@ namespace Sunmax0731.SquareCropEditor.Editor.Windows
         {
             using (new EditorGUILayout.VerticalScope(GUILayout.Width(Mathf.Max(260, position.width * 0.32f))))
             {
-                EditorGUILayout.LabelField("Output", EditorStyles.boldLabel);
+                EditorGUILayout.LabelField(T("output", "Output"), EditorStyles.boldLabel);
                 var previewRect = GUILayoutUtility.GetRect(240, MinPreviewHeight, GUILayout.ExpandWidth(true));
                 EditorGUI.DrawRect(previewRect, new Color(0.13f, 0.13f, 0.13f));
 
                 if (_outputPreview == null)
                 {
-                    DrawCenteredLabel(previewRect, "No preview");
+                    DrawCenteredLabel(previewRect, T("noPreview", "No preview"));
                     return;
                 }
 
@@ -336,7 +397,7 @@ namespace Sunmax0731.SquareCropEditor.Editor.Windows
         {
             using (new EditorGUI.DisabledScope(_sourceTexture == null || !_selection.IsValid))
             {
-                if (GUILayout.Button("Export PNG", GUILayout.Height(28)))
+                if (GUILayout.Button(T("exportPng", "Export PNG"), GUILayout.Height(28)))
                 {
                     ExportPng();
                 }
@@ -484,7 +545,9 @@ namespace Sunmax0731.SquareCropEditor.Editor.Windows
                     var outputSize = AspectOutputPlanner.CalculateOutputSize(_settings.OutputSize, GetAspectRatio(_outputPreset, _customOutputWidth, _customOutputHeight));
                     var plan = AspectOutputPlanner.Plan(_selection, outputSize, _settings.MappingMode);
                     _outputPreview = PngAspectExporter.Render(readable.Texture, plan);
-                    SetStatus(readable.OwnsTexture ? $"Selection: {_selection.Width} x {_selection.Height}. Using temporary readable copy." : $"Selection: {_selection.Width} x {_selection.Height}", readable.OwnsTexture ? MessageType.Warning : MessageType.Info);
+                    SetStatus(readable.OwnsTexture
+                        ? TFormat("status.selectionTemporaryReadable", "Selection: {0} x {1}. Using temporary readable copy.", _selection.Width, _selection.Height)
+                        : TFormat("status.selection", "Selection: {0} x {1}", _selection.Width, _selection.Height), readable.OwnsTexture ? MessageType.Warning : MessageType.Info);
                 }
                 finally
                 {
@@ -501,7 +564,7 @@ namespace Sunmax0731.SquareCropEditor.Editor.Windows
         {
             if (!ConfirmExport())
             {
-                SetStatus("Export canceled.", MessageType.Info);
+                SetStatus(T("status.exportCanceled", "Export canceled."), MessageType.Info);
                 return;
             }
 
@@ -529,7 +592,9 @@ namespace Sunmax0731.SquareCropEditor.Editor.Windows
                 if (result.Status == PngExportStatus.Exported)
                 {
                     SelectOutputAssetIfNeeded(result.OutputPath);
-                    SetStatus(readable.OwnsTexture ? $"Exported with temporary readable copy: {result.OutputPath}" : $"Exported: {result.OutputPath}", readable.OwnsTexture ? MessageType.Warning : MessageType.Info);
+                    SetStatus(readable.OwnsTexture
+                        ? TFormat("status.exportedTemporaryReadable", "Exported with temporary readable copy: {0}", result.OutputPath)
+                        : TFormat("status.exported", "Exported: {0}", result.OutputPath), readable.OwnsTexture ? MessageType.Warning : MessageType.Info);
                 }
                 else if (result.Status == PngExportStatus.Skipped)
                 {
@@ -553,15 +618,15 @@ namespace Sunmax0731.SquareCropEditor.Editor.Windows
                 GetAspectRatio(_outputPreset, _customOutputWidth, _customOutputHeight));
             var outputPath = ResolveOutputPathForDisplay(_settings.OutputFolder, _settings.OutputFileName);
             var message = new StringBuilder()
-                .AppendLine($"Output: {outputSize.Width} x {outputSize.Height}")
-                .AppendLine($"Selection: {_selection.X}, {_selection.Y}, {_selection.Width} x {_selection.Height}")
-                .AppendLine($"Mapping: {_settings.MappingMode}")
-                .AppendLine($"Conflict: {_settings.ConflictBehavior}")
+                .AppendLine($"{T("dialog.output", "Output")}: {outputSize.Width} x {outputSize.Height}")
+                .AppendLine($"{T("dialog.selection", "Selection")}: {_selection.X}, {_selection.Y}, {_selection.Width} x {_selection.Height}")
+                .AppendLine($"{T("dialog.mapping", "Mapping")}: {_settings.MappingMode}")
+                .AppendLine($"{T("dialog.conflict", "Conflict")}: {_settings.ConflictBehavior}")
                 .AppendLine()
                 .AppendLine(outputPath)
                 .ToString();
 
-            return EditorUtility.DisplayDialog("Confirm PNG Export", message, "Export", "Cancel");
+            return EditorUtility.DisplayDialog(T("confirmPngExport", "Confirm PNG Export"), message, T("export", "Export"), T("cancel", "Cancel"));
         }
 
         private static string ResolveOutputPathForDisplay(string outputFolder, string outputFileName)
@@ -654,7 +719,7 @@ namespace Sunmax0731.SquareCropEditor.Editor.Windows
         private void SelectOutputFolder()
         {
             var currentFolder = ResolveOutputFolderForPanel(_settings.OutputFolder);
-            var selectedFolder = EditorUtility.OpenFolderPanel("Select Output Folder", currentFolder, string.Empty);
+            var selectedFolder = EditorUtility.OpenFolderPanel(T("outputFolder", "Output Folder"), currentFolder, string.Empty);
             if (string.IsNullOrEmpty(selectedFolder))
             {
                 return;
@@ -737,6 +802,76 @@ namespace Sunmax0731.SquareCropEditor.Editor.Windows
         {
             _statusMessage = message;
             _statusType = type;
+        }
+
+        private void LoadLanguageMode()
+        {
+            var modeValue = EditorPrefs.GetInt(LanguageModePrefsKey, (int)SquareCropLanguageMode.Auto);
+            _languageMode = Enum.IsDefined(typeof(SquareCropLanguageMode), modeValue)
+                ? (SquareCropLanguageMode)modeValue
+                : SquareCropLanguageMode.Auto;
+            _displayLanguage = SquareCropLocalization.ResolveLanguage(_languageMode);
+            titleContent = new GUIContent(T("windowTitle", WindowTitle));
+        }
+
+        private void OpenHelpWindow()
+        {
+            if (_parameterHelpWindow == null)
+            {
+                _parameterHelpWindow = CreateInstance<ParameterHelpWindow>();
+                _parameterHelpWindow.SetOwner(this);
+                _parameterHelpWindow.ShowUtility();
+            }
+
+            _parameterHelpWindow.titleContent = new GUIContent(T("parameterHelp", "Parameter Help"));
+            _parameterHelpWindow.Focus();
+        }
+
+        private string T(string key, string englishText)
+        {
+            return SquareCropLocalization.Get(_displayLanguage, key, englishText);
+        }
+
+        private string TFormat(string key, string englishFormat, params object[] args)
+        {
+            return SquareCropLocalization.Format(_displayLanguage, key, englishFormat, args);
+        }
+
+        private sealed class ParameterHelpWindow : EditorWindow
+        {
+            private SquareCropEditorWindow _owner;
+            private Vector2 _scroll;
+
+            public void SetOwner(SquareCropEditorWindow owner)
+            {
+                _owner = owner;
+                titleContent = new GUIContent(owner != null ? owner.T("parameterHelp", "Parameter Help") : "Parameter Help");
+                minSize = new Vector2(360f, 260f);
+            }
+
+            private void OnGUI()
+            {
+                if (_owner == null)
+                {
+                    EditorGUILayout.HelpBox("Open Tools > Square Crop Editor > Open to reconnect this help window.", MessageType.Info);
+                    return;
+                }
+
+                _scroll = EditorGUILayout.BeginScrollView(_scroll);
+                DrawHelpSection(_owner.T("help.source.title", "Source / Crop"), _owner.T("help.source.body", "Choose a source image, then drag on the preview to create a crop selection. Drag from inside the existing selection to move it while keeping its size."));
+                DrawHelpSection(_owner.T("cropRatio", "Crop Ratio"), _owner.T("help.ratio.body", "Crop Ratio controls the selection aspect. Free keeps the dragged width and height unconstrained. Custom uses the entered ratio."));
+                DrawHelpSection(_owner.T("selection", "Selection"), _owner.T("help.selection.body", "X/Y/W/H are source-image pixel coordinates. You can edit them numerically. Zoom and pan affect only the preview view, not exported coordinates."));
+                DrawHelpSection(_owner.T("help.output.title", "Output"), _owner.T("help.output.body", "Output Ratio and Output Long Edge determine the PNG canvas size. Mapping controls how the selection fits the canvas. Conflict controls behavior when the output file already exists."));
+                DrawHelpSection(_owner.T("help.export.title", "Export"), _owner.T("help.export.body", "Export PNG shows a confirmation dialog with size, selection, and destination. Assets output is selected and pinged after export. Textures with Read/Write disabled may be processed through a temporary readable copy."));
+                EditorGUILayout.EndScrollView();
+            }
+
+            private static void DrawHelpSection(string title, string body)
+            {
+                EditorGUILayout.LabelField(title, EditorStyles.boldLabel);
+                EditorGUILayout.HelpBox(body, MessageType.None);
+                EditorGUILayout.Space(4);
+            }
         }
 
         private enum AspectPreset
