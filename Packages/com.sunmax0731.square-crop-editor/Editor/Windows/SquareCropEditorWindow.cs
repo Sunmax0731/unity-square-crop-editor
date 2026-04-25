@@ -14,10 +14,11 @@ namespace Sunmax0731.SquareCropEditor.Editor.Windows
     {
         public const string WindowTitle = "Square Crop Editor";
 
+        private const string ToolVersion = "0.1.0";
         private const float ControlPanelWidth = 300f;
-        private const float OutputPanelWidth = 280f;
         private const int MinPreviewHeight = 280;
         private const string LanguageModePrefsKey = "Sunmax.SquareCropEditor.LanguageMode";
+        private const string TermsOfUsePath = "Packages/com.sunmax0731.square-crop-editor/TermsOfUse.md";
         private static readonly Color SelectionColor = new Color(0.2f, 0.65f, 1f, 0.95f);
         private static readonly Color SelectionFillColor = new Color(0.2f, 0.65f, 1f, 0.16f);
 
@@ -43,6 +44,7 @@ namespace Sunmax0731.SquareCropEditor.Editor.Windows
         private MessageType _statusType = MessageType.Info;
         private SquareCropLanguageMode _languageMode = SquareCropLanguageMode.Auto;
         private SquareCropDisplayLanguage _displayLanguage = SquareCropDisplayLanguage.English;
+        private DetachedOutputWindow _detachedOutputWindow;
         private ParameterHelpWindow _parameterHelpWindow;
 
         [MenuItem(SquareCropDefaults.MenuPath)]
@@ -53,8 +55,35 @@ namespace Sunmax0731.SquareCropEditor.Editor.Windows
             window.Show();
         }
 
+        [MenuItem("Tools/Square Crop Editor/Open Output Preview")]
+        public static void OpenOutputPreviewFromMenu()
+        {
+            var window = GetWindow<SquareCropEditorWindow>();
+            window.OpenDetachedOutputWindow();
+        }
+
+        [MenuItem("Tools/Square Crop Editor/License")]
+        public static void OpenLicense()
+        {
+            var termsAsset = AssetDatabase.LoadAssetAtPath<UnityEngine.Object>(TermsOfUsePath);
+            if (termsAsset != null)
+            {
+                AssetDatabase.OpenAsset(termsAsset);
+                return;
+            }
+
+            EditorUtility.DisplayDialog("Square Crop Editor License", "TermsOfUse.md was not found in the package.", "OK");
+        }
+
+        [MenuItem("Tools/Square Crop Editor/Version")]
+        public static void ShowVersion()
+        {
+            EditorUtility.DisplayDialog("Square Crop Editor Version", $"Unity Square Crop Editor\nVersion: {ToolVersion}", "OK");
+        }
+
         private void OnEnable()
         {
+            minSize = new Vector2(900f, 560f);
             _settings = SquareCropDefaults.CreateSettings();
             if (string.IsNullOrEmpty(_settings.OutputFileName))
             {
@@ -71,6 +100,12 @@ namespace Sunmax0731.SquareCropEditor.Editor.Windows
 
         private void OnDisable()
         {
+            if (_detachedOutputWindow != null)
+            {
+                _detachedOutputWindow.SetOwner(null);
+                _detachedOutputWindow = null;
+            }
+
             if (_parameterHelpWindow != null)
             {
                 _parameterHelpWindow.SetOwner(null);
@@ -109,10 +144,16 @@ namespace Sunmax0731.SquareCropEditor.Editor.Windows
             {
                 EditorGUILayout.LabelField(T("windowTitle", WindowTitle), EditorStyles.boldLabel, GUILayout.MinWidth(160));
                 GUILayout.Space(8);
+                EditorGUILayout.LabelField(T("sourceImage", "Source Image"), GUILayout.Width(90f));
                 DrawSourceField();
                 GUILayout.Space(8);
                 using (new EditorGUI.DisabledScope(_sourceTexture == null || !_selection.IsValid))
                 {
+                    if (GUILayout.Button(T("openOutputWindow", "Output"), EditorStyles.toolbarButton, GUILayout.Width(82)))
+                    {
+                        OpenDetachedOutputWindow();
+                    }
+
                     if (GUILayout.Button(T("exportPng", "Export PNG"), EditorStyles.toolbarButton, GUILayout.Width(86)))
                     {
                         ExportPng();
@@ -125,6 +166,7 @@ namespace Sunmax0731.SquareCropEditor.Editor.Windows
                 }
 
                 DrawLanguagePopup();
+                GUILayout.FlexibleSpace();
             }
         }
 
@@ -142,10 +184,9 @@ namespace Sunmax0731.SquareCropEditor.Editor.Windows
                 }
             }
 
-            EditorGUILayout.LabelField(T("language", "Language"), EditorStyles.miniLabel, GUILayout.Width(58));
             using (var change = new EditorGUI.ChangeCheckScope())
             {
-                selectedIndex = EditorGUILayout.Popup(selectedIndex, labels, EditorStyles.toolbarPopup, GUILayout.Width(92));
+                selectedIndex = EditorGUILayout.Popup(selectedIndex, labels, EditorStyles.toolbarPopup, GUILayout.Width(110));
                 if (change.changed)
                 {
                     _languageMode = modes[selectedIndex];
@@ -164,7 +205,6 @@ namespace Sunmax0731.SquareCropEditor.Editor.Windows
             {
                 DrawControlPanel();
                 DrawSourcePreview();
-                DrawOutputPreview();
             }
         }
 
@@ -199,7 +239,7 @@ namespace Sunmax0731.SquareCropEditor.Editor.Windows
 
         private void DrawSourceField()
         {
-            var texture = (Texture2D)EditorGUILayout.ObjectField(T("sourceImage", "Source Image"), _sourceTexture, typeof(Texture2D), false, GUILayout.MinWidth(220), GUILayout.MaxWidth(440));
+            var texture = (Texture2D)EditorGUILayout.ObjectField(_sourceTexture, typeof(Texture2D), false, GUILayout.MinWidth(220), GUILayout.MaxWidth(440));
             if (texture != _sourceTexture)
             {
                 _sourceTexture = texture;
@@ -415,25 +455,22 @@ namespace Sunmax0731.SquareCropEditor.Editor.Windows
             }
         }
 
-        private void DrawOutputPreview()
+        private void DrawOutputPreviewContent()
         {
-            using (new EditorGUILayout.VerticalScope(GUILayout.Width(OutputPanelWidth)))
+            EditorGUILayout.LabelField(T("output", "Output"), EditorStyles.boldLabel);
+            var previewRect = GUILayoutUtility.GetRect(260, 10000, MinPreviewHeight, MinPreviewHeight, GUILayout.ExpandWidth(true));
+            EditorGUI.DrawRect(previewRect, new Color(0.13f, 0.13f, 0.13f));
+
+            if (_outputPreview == null)
             {
-                EditorGUILayout.LabelField(T("output", "Output"), EditorStyles.boldLabel);
-                var previewRect = GUILayoutUtility.GetRect(240, MinPreviewHeight, GUILayout.ExpandWidth(true));
-                EditorGUI.DrawRect(previewRect, new Color(0.13f, 0.13f, 0.13f));
-
-                if (_outputPreview == null)
-                {
-                    DrawCenteredLabel(previewRect, T("noPreview", "No preview"));
-                    return;
-                }
-
-                var imageRect = FitRect(previewRect, _outputPreview.width, _outputPreview.height);
-                GUI.DrawTextureWithTexCoords(imageRect, _checkerboard, new Rect(0, 0, imageRect.width / _checkerboard.width, imageRect.height / _checkerboard.height));
-                GUI.DrawTexture(imageRect, _outputPreview, ScaleMode.StretchToFill, true);
-                EditorGUILayout.LabelField($"{_outputPreview.width} x {_outputPreview.height}");
+                DrawCenteredLabel(previewRect, T("noPreview", "No preview"));
+                return;
             }
+
+            var imageRect = FitRect(previewRect, _outputPreview.width, _outputPreview.height);
+            GUI.DrawTextureWithTexCoords(imageRect, _checkerboard, new Rect(0, 0, imageRect.width / _checkerboard.width, imageRect.height / _checkerboard.height));
+            GUI.DrawTexture(imageRect, _outputPreview, ScaleMode.StretchToFill, true);
+            EditorGUILayout.LabelField($"{_outputPreview.width} x {_outputPreview.height}");
         }
 
         private void HandleDragSelection(Rect imageRect, Rect previewRect)
@@ -580,6 +617,7 @@ namespace Sunmax0731.SquareCropEditor.Editor.Windows
                     SetStatus(readable.OwnsTexture
                         ? TFormat("status.selectionTemporaryReadable", "Selection: {0} x {1}. Using temporary readable copy.", _selection.Width, _selection.Height)
                         : TFormat("status.selection", "Selection: {0} x {1}", _selection.Width, _selection.Height), readable.OwnsTexture ? MessageType.Warning : MessageType.Info);
+                    _detachedOutputWindow?.Repaint();
                 }
                 finally
                 {
@@ -827,6 +865,7 @@ namespace Sunmax0731.SquareCropEditor.Editor.Windows
             {
                 DestroyImmediate(_outputPreview);
                 _outputPreview = null;
+                _detachedOutputWindow?.Repaint();
             }
         }
 
@@ -850,13 +889,26 @@ namespace Sunmax0731.SquareCropEditor.Editor.Windows
         {
             if (_parameterHelpWindow == null)
             {
-                _parameterHelpWindow = CreateInstance<ParameterHelpWindow>();
-                _parameterHelpWindow.SetOwner(this);
-                _parameterHelpWindow.ShowUtility();
+                _parameterHelpWindow = GetWindow<ParameterHelpWindow>();
             }
 
+            _parameterHelpWindow.SetOwner(this);
             _parameterHelpWindow.titleContent = new GUIContent(T("parameterHelp", "Parameter Help"));
+            _parameterHelpWindow.Show();
             _parameterHelpWindow.Focus();
+        }
+
+        private void OpenDetachedOutputWindow()
+        {
+            if (_detachedOutputWindow == null)
+            {
+                _detachedOutputWindow = GetWindow<DetachedOutputWindow>();
+            }
+
+            _detachedOutputWindow.SetOwner(this);
+            _detachedOutputWindow.titleContent = new GUIContent(T("outputPreview", "Output Preview"));
+            _detachedOutputWindow.Show();
+            _detachedOutputWindow.Focus();
         }
 
         private string T(string key, string englishText)
@@ -903,6 +955,30 @@ namespace Sunmax0731.SquareCropEditor.Editor.Windows
                 EditorGUILayout.LabelField(title, EditorStyles.boldLabel);
                 EditorGUILayout.HelpBox(body, MessageType.None);
                 EditorGUILayout.Space(4);
+            }
+        }
+
+        private sealed class DetachedOutputWindow : EditorWindow
+        {
+            private SquareCropEditorWindow _owner;
+
+            public void SetOwner(SquareCropEditorWindow owner)
+            {
+                _owner = owner;
+                titleContent = new GUIContent(owner != null ? owner.T("outputPreview", "Output Preview") : "Output Preview");
+                minSize = new Vector2(320f, 320f);
+            }
+
+            private void OnGUI()
+            {
+                if (_owner == null)
+                {
+                    var language = SquareCropLocalization.ResolveLanguage(SquareCropLanguageMode.Auto);
+                    EditorGUILayout.HelpBox(SquareCropLocalization.Get(language, "detachedOutputReconnect", "Open Tools > Square Crop Editor > Open again to reconnect the output preview."), MessageType.Info);
+                    return;
+                }
+
+                _owner.DrawOutputPreviewContent();
             }
         }
 
