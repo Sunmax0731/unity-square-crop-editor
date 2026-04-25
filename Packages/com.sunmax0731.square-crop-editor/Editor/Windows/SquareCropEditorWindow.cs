@@ -30,6 +30,8 @@ namespace Sunmax0731.SquareCropEditor.Editor.Windows
         private int _customOutputHeight = 1;
         private Vector2 _dragStartLocal;
         private Rect _dragImageRect;
+        private CropSelection _dragStartSelection;
+        private DragMode _dragMode = DragMode.None;
         private float _sourceZoom = 1f;
         private Vector2 _sourcePan;
         private bool _isDragging;
@@ -353,6 +355,8 @@ namespace Sunmax0731.SquareCropEditor.Editor.Windows
             {
                 _dragImageRect = imageRect;
                 _dragStartLocal = ClampLocalPoint(currentEvent.mousePosition - _dragImageRect.position, _dragImageRect);
+                _dragStartSelection = _selection;
+                _dragMode = IsMouseOverSelection(currentEvent.mousePosition, imageRect) ? DragMode.Move : DragMode.Create;
                 _isDragging = true;
                 currentEvent.Use();
             }
@@ -362,24 +366,36 @@ namespace Sunmax0731.SquareCropEditor.Editor.Windows
                 var clampedMousePosition = ClampPointToRect(currentEvent.mousePosition, previewRect);
                 var localStart = ClampLocalPoint(_dragStartLocal, _dragImageRect);
                 var localEnd = ClampLocalPoint(clampedMousePosition - _dragImageRect.position, _dragImageRect);
-                var previewSize = new PixelSize(Mathf.RoundToInt(_dragImageRect.width), Mathf.RoundToInt(_dragImageRect.height));
                 var sourceSize = new PixelSize(_sourceTexture.width, _sourceTexture.height);
-                _selection = _cropPreset == AspectPreset.Free
-                    ? CropRectCalculator.FromPreviewDrag(
-                        localStart.x,
-                        localStart.y,
-                        localEnd.x,
-                        localEnd.y,
-                        previewSize,
-                        sourceSize)
-                    : CropRectCalculator.FromPreviewDrag(
-                        localStart.x,
-                        localStart.y,
-                        localEnd.x,
-                        localEnd.y,
-                        previewSize,
+                if (_dragMode == DragMode.Move && _dragStartSelection.IsValid)
+                {
+                    var delta = localEnd - localStart;
+                    _selection = CropRectCalculator.MoveSelection(
+                        _dragStartSelection,
                         sourceSize,
-                        GetAspectRatio(_cropPreset, _customCropWidth, _customCropHeight));
+                        delta.x * _sourceTexture.width / _dragImageRect.width,
+                        delta.y * _sourceTexture.height / _dragImageRect.height);
+                }
+                else
+                {
+                    var previewSize = new PixelSize(Mathf.RoundToInt(_dragImageRect.width), Mathf.RoundToInt(_dragImageRect.height));
+                    _selection = _cropPreset == AspectPreset.Free
+                        ? CropRectCalculator.FromPreviewDrag(
+                            localStart.x,
+                            localStart.y,
+                            localEnd.x,
+                            localEnd.y,
+                            previewSize,
+                            sourceSize)
+                        : CropRectCalculator.FromPreviewDrag(
+                            localStart.x,
+                            localStart.y,
+                            localEnd.x,
+                            localEnd.y,
+                            previewSize,
+                            sourceSize,
+                            GetAspectRatio(_cropPreset, _customCropWidth, _customCropHeight));
+                }
                 RefreshOutputPreview();
                 Repaint();
                 currentEvent.Use();
@@ -387,8 +403,19 @@ namespace Sunmax0731.SquareCropEditor.Editor.Windows
                 if (currentEvent.type == EventType.MouseUp)
                 {
                     _isDragging = false;
+                    _dragMode = DragMode.None;
                 }
             }
+        }
+
+        private bool IsMouseOverSelection(Vector2 mousePosition, Rect imageRect)
+        {
+            if (!_selection.IsValid || _sourceTexture == null)
+            {
+                return false;
+            }
+
+            return GetSelectionRect(imageRect).Contains(mousePosition);
         }
 
         private static Vector2 ClampPointToRect(Vector2 point, Rect rect)
@@ -423,6 +450,15 @@ namespace Sunmax0731.SquareCropEditor.Editor.Windows
             Handles.color = SelectionColor;
             Handles.DrawAAPolyLine(3f, new Vector3(rect.xMin, rect.yMin), new Vector3(rect.xMax, rect.yMin), new Vector3(rect.xMax, rect.yMax), new Vector3(rect.xMin, rect.yMax), new Vector3(rect.xMin, rect.yMin));
             Handles.EndGUI();
+        }
+
+        private Rect GetSelectionRect(Rect imageRect)
+        {
+            var x = imageRect.x + imageRect.width * _selection.X / _sourceTexture.width;
+            var y = imageRect.y + imageRect.height * _selection.Y / _sourceTexture.height;
+            var width = imageRect.width * _selection.Width / _sourceTexture.width;
+            var height = imageRect.height * _selection.Height / _sourceTexture.height;
+            return new Rect(x, y, width, height);
         }
 
         private void RefreshOutputPreview()
@@ -712,6 +748,13 @@ namespace Sunmax0731.SquareCropEditor.Editor.Windows
             Landscape16By9,
             Portrait9By16,
             Custom
+        }
+
+        private enum DragMode
+        {
+            None,
+            Create,
+            Move
         }
     }
 }

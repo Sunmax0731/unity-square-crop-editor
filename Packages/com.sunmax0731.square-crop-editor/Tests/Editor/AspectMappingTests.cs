@@ -120,6 +120,18 @@ namespace Sunmax0731.SquareCropEditor.Tests.Editor
         }
 
         [Test]
+        public void MoveSelectionKeepsSizeAndClampsToBounds()
+        {
+            var selection = CropRectCalculator.MoveSelection(
+                new CropSelection(80, 80, 30, 20),
+                new PixelSize(100, 100),
+                50,
+                50);
+
+            Assert.That(selection, Is.EqualTo(new CropSelection(70, 80, 30, 20)));
+        }
+
+        [Test]
         public void FitMapsFullSourceInsideTransparentCanvasArea()
         {
             var plan = AspectOutputPlanner.Plan(
