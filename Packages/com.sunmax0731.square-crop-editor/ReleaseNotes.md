@@ -1,5 +1,25 @@
 # Release Notes
 
+## v0.2.0
+
+### Added
+
+- Free crop ratio mode for unconstrained crop selections.
+- Drag-to-move behavior when starting a drag inside the current selection.
+- Source preview zoom and pan controls.
+- Manual selection fields for X/Y/W/H adjustment.
+- Output folder controls, PNG extension helper, and export confirmation dialog.
+- Auto/Japanese/English language setting.
+- Parameter help window.
+- Detached Output preview window.
+- Tools menu entries for Output Preview, License, and Version.
+
+### Changed
+
+- Reorganized the editor layout so Source preview remains in the main window and Output preview opens separately.
+- Improved status and validation messages.
+- Selects and pings generated assets when exporting under `Assets`.
+
 ## v0.1.0
 
 Initial MVP release.
