@@ -23,5 +23,5 @@ The tool is provided as-is. Always verify exported images before using them in p
 ## Known Technical Boundaries
 
 - The tool is an Editor extension and is not intended for runtime use.
-- The `v0.1.0` workflow is limited to single-image crop and export.
+- The current workflow is limited to single-image crop and export.
 - The tool does not permanently change source texture importer settings during export.
