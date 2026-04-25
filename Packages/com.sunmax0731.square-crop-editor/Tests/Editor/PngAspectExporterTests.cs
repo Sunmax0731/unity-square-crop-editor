@@ -73,6 +73,23 @@ namespace Sunmax0731.SquareCropEditor.Tests.Editor
         }
 
         [Test]
+        public void OutputPaddingLeavesTransparentBorder()
+        {
+            var source = CreateSourceTexture();
+            var output = PngAspectExporter.Render(
+                source,
+                AspectOutputPlanner.Plan(new CropSelection(0, 0, 4, 4), new PixelSize(8, 8), CanvasMappingMode.Stretch, 2));
+
+            Assert.That(output.GetPixel(0, 0).a, Is.EqualTo(0f).Within(0.001f));
+            Assert.That(output.GetPixel(7, 7).a, Is.EqualTo(0f).Within(0.001f));
+            Assert.That(output.GetPixel(2, 2).a, Is.GreaterThan(0f));
+            Assert.That(output.GetPixel(5, 5).a, Is.GreaterThan(0f));
+
+            UnityEngine.Object.DestroyImmediate(source);
+            UnityEngine.Object.DestroyImmediate(output);
+        }
+
+        [Test]
         public void ExportPreservesSourceAlpha()
         {
             var source = CreateSourceTexture();
