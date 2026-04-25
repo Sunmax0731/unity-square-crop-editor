@@ -1,5 +1,18 @@
 # Release Notes
 
+## v0.3.0
+
+### Added
+
+- Source preview scrollbars when the zoomed image exceeds the visible preview area.
+- Numeric `Pan X` / `Pan Y` fields synchronized with Source preview scrollbars.
+- Output Padding setting for transparent margins around the exported selection.
+
+### Changed
+
+- Output padding is applied consistently to Output preview and PNG export.
+- Output mapping now places `Fit`, `Fill`, and `Stretch` results inside the padded content area.
+
 ## v0.2.0
 
 ### Added
