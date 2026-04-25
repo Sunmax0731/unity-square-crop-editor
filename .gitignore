@@ -10,6 +10,13 @@
 /[Uu]ser[Ss]ettings/
 *.log
 
+# Root Unity project files generated during local validation.
+# The product source for this repo lives under Packages/com.sunmax0731.square-crop-editor.
+/[Aa]ssets/
+/[Pp]roject[Ss]ettings/
+/[Pp]ackages/manifest.json
+/[Pp]ackages/packages-lock.json
+
 # IDE / generated project files
 .vs/
 *.csproj
