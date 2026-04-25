@@ -14,6 +14,8 @@ namespace Sunmax0731.SquareCropEditor.Editor.Windows
     {
         public const string WindowTitle = "Square Crop Editor";
 
+        private const float ControlPanelWidth = 300f;
+        private const float OutputPanelWidth = 280f;
         private const int MinPreviewHeight = 280;
         private const string LanguageModePrefsKey = "Sunmax.SquareCropEditor.LanguageMode";
         private static readonly Color SelectionColor = new Color(0.2f, 0.65f, 1f, 0.95f);
@@ -92,20 +94,13 @@ namespace Sunmax0731.SquareCropEditor.Editor.Windows
 
             using (var change = new EditorGUI.ChangeCheckScope())
             {
-                DrawSourceControls();
-                DrawAspectControls();
-                DrawOutputControls();
+                DrawMainLayout();
 
                 if (change.changed)
                 {
                     RefreshOutputPreview();
                 }
             }
-
-            DrawSelectionActions();
-            DrawSelectionFields();
-            DrawPreviewArea();
-            DrawExportButton();
         }
 
         private void DrawToolbar()
@@ -113,7 +108,17 @@ namespace Sunmax0731.SquareCropEditor.Editor.Windows
             using (new EditorGUILayout.HorizontalScope(EditorStyles.toolbar))
             {
                 EditorGUILayout.LabelField(T("windowTitle", WindowTitle), EditorStyles.boldLabel, GUILayout.MinWidth(160));
-                GUILayout.FlexibleSpace();
+                GUILayout.Space(8);
+                DrawSourceField();
+                GUILayout.Space(8);
+                using (new EditorGUI.DisabledScope(_sourceTexture == null || !_selection.IsValid))
+                {
+                    if (GUILayout.Button(T("exportPng", "Export PNG"), EditorStyles.toolbarButton, GUILayout.Width(86)))
+                    {
+                        ExportPng();
+                    }
+                }
+
                 if (GUILayout.Button(T("help", "Help"), EditorStyles.toolbarButton, GUILayout.Width(56)))
                 {
                     OpenHelpWindow();
@@ -153,10 +158,48 @@ namespace Sunmax0731.SquareCropEditor.Editor.Windows
             }
         }
 
-        private void DrawSourceControls()
+        private void DrawMainLayout()
         {
-            EditorGUILayout.Space(4);
-            var texture = (Texture2D)EditorGUILayout.ObjectField(T("sourceImage", "Source Image"), _sourceTexture, typeof(Texture2D), false);
+            using (new EditorGUILayout.HorizontalScope())
+            {
+                DrawControlPanel();
+                DrawSourcePreview();
+                DrawOutputPreview();
+            }
+        }
+
+        private void DrawControlPanel()
+        {
+            using (new EditorGUILayout.VerticalScope(GUILayout.Width(ControlPanelWidth)))
+            {
+                DrawSectionHeader(T("cropRatio", "Crop Ratio"));
+                DrawAspectControls();
+                DrawSectionSeparator();
+                DrawSectionHeader(T("output", "Output"));
+                DrawOutputControls();
+                DrawSectionSeparator();
+                DrawSectionHeader(T("selection", "Selection"));
+                DrawSelectionActions();
+                DrawSelectionFields();
+            }
+        }
+
+        private void DrawSectionHeader(string title)
+        {
+            EditorGUILayout.LabelField(title, EditorStyles.boldLabel);
+        }
+
+        private void DrawSectionSeparator()
+        {
+            EditorGUILayout.Space(6);
+            var rect = GUILayoutUtility.GetRect(1f, 1f, GUILayout.ExpandWidth(true));
+            EditorGUI.DrawRect(rect, new Color(0.25f, 0.25f, 0.25f, 0.8f));
+            EditorGUILayout.Space(6);
+        }
+
+        private void DrawSourceField()
+        {
+            var texture = (Texture2D)EditorGUILayout.ObjectField(T("sourceImage", "Source Image"), _sourceTexture, typeof(Texture2D), false, GUILayout.MinWidth(220), GUILayout.MaxWidth(440));
             if (texture != _sourceTexture)
             {
                 _sourceTexture = texture;
@@ -238,7 +281,7 @@ namespace Sunmax0731.SquareCropEditor.Editor.Windows
 
         private void DrawSelectionActions()
         {
-            using (new EditorGUILayout.HorizontalScope())
+            using (new EditorGUILayout.VerticalScope())
             {
                 using (new EditorGUI.DisabledScope(_sourceTexture == null))
                 {
@@ -271,17 +314,27 @@ namespace Sunmax0731.SquareCropEditor.Editor.Windows
 
         private void DrawSelectionFields()
         {
-            using (new EditorGUILayout.HorizontalScope())
+            using (new EditorGUILayout.VerticalScope())
             {
                 using (new EditorGUI.DisabledScope(_sourceTexture == null || !_selection.IsValid))
                 {
-                    EditorGUILayout.LabelField(T("selection", "Selection"), GUILayout.Width(64));
                     using (var change = new EditorGUI.ChangeCheckScope())
                     {
-                        var x = EditorGUILayout.IntField("X", _selection.IsValid ? _selection.X : 0, GUILayout.MaxWidth(96));
-                        var y = EditorGUILayout.IntField("Y", _selection.IsValid ? _selection.Y : 0, GUILayout.MaxWidth(96));
-                        var width = EditorGUILayout.IntField("W", _selection.IsValid ? _selection.Width : 0, GUILayout.MaxWidth(96));
-                        var height = EditorGUILayout.IntField("H", _selection.IsValid ? _selection.Height : 0, GUILayout.MaxWidth(96));
+                        int x;
+                        int y;
+                        int width;
+                        int height;
+                        using (new EditorGUILayout.HorizontalScope())
+                        {
+                            x = EditorGUILayout.IntField("X", _selection.IsValid ? _selection.X : 0);
+                            y = EditorGUILayout.IntField("Y", _selection.IsValid ? _selection.Y : 0);
+                        }
+
+                        using (new EditorGUILayout.HorizontalScope())
+                        {
+                            width = EditorGUILayout.IntField("W", _selection.IsValid ? _selection.Width : 0);
+                            height = EditorGUILayout.IntField("H", _selection.IsValid ? _selection.Height : 0);
+                        }
 
                         if (change.changed)
                         {
@@ -302,19 +355,9 @@ namespace Sunmax0731.SquareCropEditor.Editor.Windows
             }
         }
 
-        private void DrawPreviewArea()
-        {
-            EditorGUILayout.Space(8);
-            using (new EditorGUILayout.HorizontalScope())
-            {
-                DrawSourcePreview();
-                DrawOutputPreview();
-            }
-        }
-
         private void DrawSourcePreview()
         {
-            using (new EditorGUILayout.VerticalScope(GUILayout.MinWidth(position.width * 0.58f)))
+            using (new EditorGUILayout.VerticalScope(GUILayout.MinWidth(360f), GUILayout.ExpandWidth(true)))
             {
                 EditorGUILayout.LabelField(T("source", "Source"), EditorStyles.boldLabel);
                 DrawSourceViewControls();
@@ -374,7 +417,7 @@ namespace Sunmax0731.SquareCropEditor.Editor.Windows
 
         private void DrawOutputPreview()
         {
-            using (new EditorGUILayout.VerticalScope(GUILayout.Width(Mathf.Max(260, position.width * 0.32f))))
+            using (new EditorGUILayout.VerticalScope(GUILayout.Width(OutputPanelWidth)))
             {
                 EditorGUILayout.LabelField(T("output", "Output"), EditorStyles.boldLabel);
                 var previewRect = GUILayoutUtility.GetRect(240, MinPreviewHeight, GUILayout.ExpandWidth(true));
@@ -390,17 +433,6 @@ namespace Sunmax0731.SquareCropEditor.Editor.Windows
                 GUI.DrawTextureWithTexCoords(imageRect, _checkerboard, new Rect(0, 0, imageRect.width / _checkerboard.width, imageRect.height / _checkerboard.height));
                 GUI.DrawTexture(imageRect, _outputPreview, ScaleMode.StretchToFill, true);
                 EditorGUILayout.LabelField($"{_outputPreview.width} x {_outputPreview.height}");
-            }
-        }
-
-        private void DrawExportButton()
-        {
-            using (new EditorGUI.DisabledScope(_sourceTexture == null || !_selection.IsValid))
-            {
-                if (GUILayout.Button(T("exportPng", "Export PNG"), GUILayout.Height(28)))
-                {
-                    ExportPng();
-                }
             }
         }
 
