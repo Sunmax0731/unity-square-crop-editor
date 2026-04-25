@@ -17,6 +17,7 @@ namespace Sunmax0731.SquareCropEditor.Editor.Windows
         private const string ToolVersion = "0.2.0";
         private const float ControlPanelWidth = 300f;
         private const int MinPreviewHeight = 280;
+        private const float PreviewScrollbarSize = 16f;
         private const string LanguageModePrefsKey = "Sunmax.SquareCropEditor.LanguageMode";
         private const string TermsOfUsePath = "Packages/com.sunmax0731.square-crop-editor/TermsOfUse.md";
         private static readonly Color SelectionColor = new Color(0.2f, 0.65f, 1f, 0.95f);
@@ -410,18 +411,20 @@ namespace Sunmax0731.SquareCropEditor.Editor.Windows
                     return;
                 }
 
-                var fittedRect = FitRect(previewRect, _sourceTexture.width, _sourceTexture.height);
-                var imageRect = ApplyZoomAndPan(previewRect, fittedRect, _sourceZoom, _sourcePan);
-                GUI.BeginClip(previewRect);
+                var viewRect = GetScrollableSourceViewRect(previewRect, _sourceTexture.width, _sourceTexture.height, _sourceZoom);
+                EditorGUI.DrawRect(viewRect, new Color(0.13f, 0.13f, 0.13f));
+                var imageRect = GetScrolledImageRect(viewRect, _sourceTexture.width, _sourceTexture.height, _sourceZoom, _sourcePan);
+                GUI.BeginClip(viewRect);
                 var localImageRect = new Rect(
-                    imageRect.x - previewRect.x,
-                    imageRect.y - previewRect.y,
+                    imageRect.x - viewRect.x,
+                    imageRect.y - viewRect.y,
                     imageRect.width,
                     imageRect.height);
                 GUI.DrawTexture(localImageRect, _sourceTexture, ScaleMode.StretchToFill, true);
                 DrawSelection(localImageRect);
                 GUI.EndClip();
-                HandleDragSelection(imageRect, previewRect);
+                DrawSourceScrollbars(previewRect, viewRect, imageRect);
+                HandleDragSelection(imageRect, viewRect);
             }
         }
 
@@ -437,15 +440,6 @@ namespace Sunmax0731.SquareCropEditor.Editor.Windows
                         _sourceZoom = 1f;
                         _sourcePan = Vector2.zero;
                     }
-                }
-            }
-
-            using (new EditorGUILayout.HorizontalScope())
-            {
-                using (new EditorGUI.DisabledScope(_sourceTexture == null || _sourceZoom <= 1f))
-                {
-                    _sourcePan.x = EditorGUILayout.Slider(T("panX", "Pan X"), _sourcePan.x, -1f, 1f);
-                    _sourcePan.y = EditorGUILayout.Slider(T("panY", "Pan Y"), _sourcePan.y, -1f, 1f);
                 }
             }
 
@@ -742,18 +736,112 @@ namespace Sunmax0731.SquareCropEditor.Editor.Windows
                 fittedHeight);
         }
 
-        private static Rect ApplyZoomAndPan(Rect container, Rect fittedRect, float zoom, Vector2 pan)
+        private static Rect GetScrollableSourceViewRect(Rect previewRect, float sourceWidth, float sourceHeight, float zoom)
         {
+            var viewRect = previewRect;
+            for (var index = 0; index < 2; index++)
+            {
+                var fittedRect = FitRect(viewRect, sourceWidth, sourceHeight);
+                var zoomedWidth = fittedRect.width * Mathf.Max(1f, zoom);
+                var zoomedHeight = fittedRect.height * Mathf.Max(1f, zoom);
+                var needsHorizontal = zoomedWidth > viewRect.width + 0.5f;
+                var needsVertical = zoomedHeight > viewRect.height + 0.5f;
+                viewRect = new Rect(
+                    previewRect.x,
+                    previewRect.y,
+                    previewRect.width - (needsVertical ? PreviewScrollbarSize : 0f),
+                    previewRect.height - (needsHorizontal ? PreviewScrollbarSize : 0f));
+            }
+
+            return viewRect;
+        }
+
+        private static Rect GetScrolledImageRect(Rect viewRect, float sourceWidth, float sourceHeight, float zoom, Vector2 pan)
+        {
+            var fittedRect = FitRect(viewRect, sourceWidth, sourceHeight);
             zoom = Mathf.Max(1f, zoom);
-            var width = fittedRect.width * zoom;
-            var height = fittedRect.height * zoom;
-            var maxPanX = Mathf.Max(0f, (width - container.width) * 0.5f);
-            var maxPanY = Mathf.Max(0f, (height - container.height) * 0.5f);
+            var imageWidth = fittedRect.width * zoom;
+            var imageHeight = fittedRect.height * zoom;
+            var maxOffsetX = Mathf.Max(0f, imageWidth - viewRect.width);
+            var maxOffsetY = Mathf.Max(0f, imageHeight - viewRect.height);
+            var offsetX = PanToScrollOffset(pan.x, maxOffsetX);
+            var offsetY = PanToScrollOffset(pan.y, maxOffsetY);
             return new Rect(
-                container.center.x - width * 0.5f + Mathf.Clamp(pan.x, -1f, 1f) * maxPanX,
-                container.center.y - height * 0.5f + Mathf.Clamp(pan.y, -1f, 1f) * maxPanY,
-                width,
-                height);
+                viewRect.x - offsetX,
+                viewRect.y - offsetY,
+                imageWidth,
+                imageHeight);
+        }
+
+        private void DrawSourceScrollbars(Rect previewRect, Rect viewRect, Rect imageRect)
+        {
+            var maxOffsetX = Mathf.Max(0f, imageRect.width - viewRect.width);
+            var maxOffsetY = Mathf.Max(0f, imageRect.height - viewRect.height);
+            var needsHorizontal = maxOffsetX > 0.5f;
+            var needsVertical = maxOffsetY > 0.5f;
+
+            if (needsHorizontal)
+            {
+                var scrollbarRect = new Rect(
+                    viewRect.x,
+                    viewRect.yMax,
+                    viewRect.width,
+                    PreviewScrollbarSize);
+                var offsetX = PanToScrollOffset(_sourcePan.x, maxOffsetX);
+                using (var change = new EditorGUI.ChangeCheckScope())
+                {
+                    offsetX = GUI.HorizontalScrollbar(scrollbarRect, offsetX, viewRect.width, 0f, imageRect.width);
+                    if (change.changed)
+                    {
+                        _sourcePan.x = ScrollOffsetToPan(offsetX, maxOffsetX);
+                    }
+                }
+            }
+            else
+            {
+                _sourcePan.x = 0f;
+            }
+
+            if (needsVertical)
+            {
+                var scrollbarRect = new Rect(
+                    viewRect.xMax,
+                    viewRect.y,
+                    PreviewScrollbarSize,
+                    viewRect.height);
+                var offsetY = PanToScrollOffset(_sourcePan.y, maxOffsetY);
+                using (var change = new EditorGUI.ChangeCheckScope())
+                {
+                    offsetY = GUI.VerticalScrollbar(scrollbarRect, offsetY, viewRect.height, 0f, imageRect.height);
+                    if (change.changed)
+                    {
+                        _sourcePan.y = ScrollOffsetToPan(offsetY, maxOffsetY);
+                    }
+                }
+            }
+            else
+            {
+                _sourcePan.y = 0f;
+            }
+
+            if (needsHorizontal && needsVertical)
+            {
+                EditorGUI.DrawRect(new Rect(viewRect.xMax, viewRect.yMax, previewRect.xMax - viewRect.xMax, previewRect.yMax - viewRect.yMax), new Color(0.13f, 0.13f, 0.13f));
+            }
+        }
+
+        private static float PanToScrollOffset(float pan, float maxOffset)
+        {
+            return maxOffset <= 0f
+                ? 0f
+                : Mathf.Clamp01((Mathf.Clamp(pan, -1f, 1f) + 1f) * 0.5f) * maxOffset;
+        }
+
+        private static float ScrollOffsetToPan(float offset, float maxOffset)
+        {
+            return maxOffset <= 0f
+                ? 0f
+                : Mathf.Clamp01(offset / maxOffset) * 2f - 1f;
         }
 
         private static void DrawCenteredLabel(Rect rect, string text)
