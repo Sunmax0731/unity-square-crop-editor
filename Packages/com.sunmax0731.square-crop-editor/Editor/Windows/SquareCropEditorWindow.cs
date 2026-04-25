@@ -444,6 +444,15 @@ namespace Sunmax0731.SquareCropEditor.Editor.Windows
                 }
             }
 
+            using (new EditorGUILayout.HorizontalScope())
+            {
+                using (new EditorGUI.DisabledScope(_sourceTexture == null || _sourceZoom <= 1f))
+                {
+                    _sourcePan.x = Mathf.Clamp(EditorGUILayout.FloatField(T("panX", "Pan X"), _sourcePan.x), -1f, 1f);
+                    _sourcePan.y = Mathf.Clamp(EditorGUILayout.FloatField(T("panY", "Pan Y"), _sourcePan.y), -1f, 1f);
+                }
+            }
+
             if (_sourceZoom <= 1f)
             {
                 _sourcePan = Vector2.zero;
