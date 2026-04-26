@@ -1,5 +1,13 @@
 # Release Notes
 
+## v0.3.1
+
+- Unity Editor menu entries are now standardized as `Tools > Square Crop Editor > メイン画面`, `ライセンス`, and `バージョン情報`.
+- Added a dedicated Unity Editor information window for MIT License and version details.
+- Added package `LICENSE.md` and updated README, manuals, validation checklist, release notes, and release copy for MIT License alignment.
+- This patch release keeps the existing single-image crop/export behavior and refreshes the public documentation surface.
+
+
 ## v0.3.0
 
 ### Added

@@ -1,8 +1,8 @@
 # Unity Square Crop Editor
 
-Unity Square Crop Editor is a planned Unity Editor extension for selecting an area of a transparent image by drag operation, cropping that area, and exporting it as a PNG with a configurable aspect ratio. The default selection and output ratio is square.
+Unity Square Crop Editor is a Unity Editor extension for selecting an area of a transparent image by drag operation, cropping that area, and exporting it as a PNG with a configurable aspect ratio. The default selection and output ratio is square.
 
-This repository starts from requirements and design work. Implementation should proceed issue by issue after the product behavior, data model, and validation strategy are agreed.
+The current implementation supports single-image crop selection, aspect-ratio output planning, alpha-preserving PNG export, preview/help windows, standardized Unity menu entries, and MIT License documentation.
 
 ## Goals
 
@@ -41,4 +41,4 @@ Batch processing, automatic object detection, masks, and atlas or grid slicing a
 
 ## License
 
-Unity Square Crop Editor is distributed under the MIT License. See [LICENSE.md](Packages/com.sunmax0731.square-crop-editor/LICENSE.md).
+Unity Square Crop Editor is distributed under the MIT License. See [LICENSE.md](LICENSE.md).

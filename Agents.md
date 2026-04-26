@@ -42,3 +42,10 @@
 - ユーザーが追加した QA 画像や生成済み `Assets/` 出力は、Issue でサンプル採用すると明記された場合だけコミットする。
 - Release artifact は tracked files から生成する。配布 ZIP に `Assets/`、`Library/`、`Logs/`、`Temp/`、`Validation/`、`ReleaseBuilds/` が含まれないことを検査する。
 - UI Toolkit への全面移行は高リスクな移行作業として扱う。安定した IMGUI ウィンドウを置き換える前に、主要ワークフローとの同等性を試作で確認する。
+
+## Shared Unity Editor Extension Convention
+
+- Public menu entries use `Tools > Square Crop Editor > メイン画面`, `Tools > Square Crop Editor > ライセンス`, and `Tools > Square Crop Editor > バージョン情報`.
+- Keep developer-only or helper commands under a secondary group such as `Developer` or `Utilities`.
+- The license is MIT License. Keep `README.md`, package README, terms/manual text, and the Unity Editor license window aligned with MIT.
+- When menu or license text changes, update README, manual, validation checklist, release notes, BOOTH/GitHub release copy, and release package contents in the same change.

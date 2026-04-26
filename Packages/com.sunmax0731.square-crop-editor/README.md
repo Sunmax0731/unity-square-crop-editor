@@ -10,7 +10,7 @@ Unity Square Crop Editor is a Unity Editor extension for selecting a region of a
 - Preview transparent PNG output.
 - Export PNG with the selected output aspect ratio.
 
-Batch export, grid slicing, automatic detection, masks, and session JSON persistence are outside the `v0.1.0` MVP.
+Batch export, grid slicing, automatic detection, masks, and session JSON persistence remain outside the current single-image crop/export scope.
 
 ## Package Layout
 
