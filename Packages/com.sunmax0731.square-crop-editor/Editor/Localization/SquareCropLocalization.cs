@@ -38,7 +38,7 @@ namespace Sunmax0731.SquareCropEditor.Editor.Localization
             ["output"] = "Output",
             ["noSourceImage"] = "Source画像がありません",
             ["noPreview"] = "プレビューなし",
-            ["detachedOutputReconnect"] = "Tools > Square Crop Editor > Open を開き直して、Outputプレビューを再接続してください。",
+            ["detachedOutputReconnect"] = "Tools > Square Crop Editor > メイン画面 を開き直して、Outputプレビューを再接続してください。",
             ["exportPng"] = "PNG出力",
             ["zoom"] = "ズーム",
             ["panX"] = "パン X",

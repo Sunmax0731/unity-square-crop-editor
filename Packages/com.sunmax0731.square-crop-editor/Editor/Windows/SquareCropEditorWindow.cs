@@ -14,12 +14,11 @@ namespace Sunmax0731.SquareCropEditor.Editor.Windows
     {
         public const string WindowTitle = "Square Crop Editor";
 
-        private const string ToolVersion = "0.3.0";
+        internal const string ToolVersion = "0.3.0";
         private const float ControlPanelWidth = 300f;
         private const int MinPreviewHeight = 280;
         private const float PreviewScrollbarSize = 16f;
         private const string LanguageModePrefsKey = "Sunmax.SquareCropEditor.LanguageMode";
-        private const string TermsOfUsePath = "Packages/com.sunmax0731.square-crop-editor/TermsOfUse.md";
         private static readonly Color SelectionColor = new Color(0.2f, 0.65f, 1f, 0.95f);
         private static readonly Color SelectionFillColor = new Color(0.2f, 0.65f, 1f, 0.16f);
 
@@ -56,30 +55,16 @@ namespace Sunmax0731.SquareCropEditor.Editor.Windows
             window.Show();
         }
 
-        [MenuItem("Tools/Square Crop Editor/Open Output Preview")]
-        public static void OpenOutputPreviewFromMenu()
-        {
-            var window = GetWindow<SquareCropEditorWindow>();
-            window.OpenDetachedOutputWindow();
-        }
-
-        [MenuItem("Tools/Square Crop Editor/License")]
+        [MenuItem("Tools/Square Crop Editor/ライセンス")]
         public static void OpenLicense()
         {
-            var termsAsset = AssetDatabase.LoadAssetAtPath<UnityEngine.Object>(TermsOfUsePath);
-            if (termsAsset != null)
-            {
-                AssetDatabase.OpenAsset(termsAsset);
-                return;
-            }
-
-            EditorUtility.DisplayDialog("Square Crop Editor License", "TermsOfUse.md was not found in the package.", "OK");
+            SquareCropInfoWindow.OpenLicense();
         }
 
-        [MenuItem("Tools/Square Crop Editor/Version")]
+        [MenuItem("Tools/Square Crop Editor/バージョン情報")]
         public static void ShowVersion()
         {
-            EditorUtility.DisplayDialog("Square Crop Editor Version", $"Unity Square Crop Editor\nVersion: {ToolVersion}", "OK");
+            SquareCropInfoWindow.OpenVersionInfo();
         }
 
         private void OnEnable()
@@ -1037,7 +1022,7 @@ namespace Sunmax0731.SquareCropEditor.Editor.Windows
             {
                 if (_owner == null)
                 {
-                    EditorGUILayout.HelpBox("Open Tools > Square Crop Editor > Open to reconnect this help window.", MessageType.Info);
+                    EditorGUILayout.HelpBox("Open Tools > Square Crop Editor > メイン画面 to reconnect this help window.", MessageType.Info);
                     return;
                 }
 
@@ -1074,7 +1059,7 @@ namespace Sunmax0731.SquareCropEditor.Editor.Windows
                 if (_owner == null)
                 {
                     var language = SquareCropLocalization.ResolveLanguage(SquareCropLanguageMode.Auto);
-                    EditorGUILayout.HelpBox(SquareCropLocalization.Get(language, "detachedOutputReconnect", "Open Tools > Square Crop Editor > Open again to reconnect the output preview."), MessageType.Info);
+                    EditorGUILayout.HelpBox(SquareCropLocalization.Get(language, "detachedOutputReconnect", "Open Tools > Square Crop Editor > メイン画面 again to reconnect the output preview."), MessageType.Info);
                     return;
                 }
 

@@ -6,7 +6,7 @@ This repository starts from requirements and design work. Implementation should 
 
 ## Goals
 
-- Open a Unity Editor tool window from the Tools menu.
+- Open a Unity Editor tool window from `Tools > Square Crop Editor > メイン画面`.
 - Select a source image asset.
 - Drag on the image preview to choose a crop region.
 - Convert the selected region into a configurable output aspect ratio.
@@ -32,3 +32,13 @@ This repository starts from requirements and design work. Implementation should 
 5. Export PNG.
 
 Batch processing, automatic object detection, masks, and atlas or grid slicing are out of scope for the first release.
+
+## Menu
+
+- `Tools > Square Crop Editor > メイン画面`
+- `Tools > Square Crop Editor > ライセンス`
+- `Tools > Square Crop Editor > バージョン情報`
+
+## License
+
+Unity Square Crop Editor is distributed under the MIT License. See [LICENSE.md](Packages/com.sunmax0731.square-crop-editor/LICENSE.md).

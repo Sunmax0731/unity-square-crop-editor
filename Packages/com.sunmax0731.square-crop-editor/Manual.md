@@ -13,8 +13,10 @@ Unity Square Crop Editor is a Unity Editor extension for drag-selecting a region
 Open the Editor window from:
 
 ```text
-Tools > Square Crop Editor > Open
+Tools > Square Crop Editor > メイン画面
 ```
+
+The license and version windows are available from `Tools > Square Crop Editor > ライセンス` and `Tools > Square Crop Editor > バージョン情報`.
 
 ## Basic Workflow
 
@@ -63,7 +65,7 @@ If a readable copy cannot be created, the status message shows the reason.
 ## Manual Smoke
 
 1. Open the Unity project.
-2. Run `Tools > Square Crop Editor > Open`.
+2. Run `Tools > Square Crop Editor > メイン画面`.
 3. Assign the sample PNG or another transparent PNG to `Source Image`.
 4. Select `Square` for `Crop Ratio` and drag on the source preview.
 5. Confirm the selection outline is constrained to a square.

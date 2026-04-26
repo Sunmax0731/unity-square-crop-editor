@@ -11,7 +11,7 @@ namespace Sunmax0731.SquareCropEditor.Tests.Editor
         {
             var settings = SquareCropDefaults.CreateSettings();
 
-            Assert.That(SquareCropDefaults.MenuPath, Is.EqualTo("Tools/Square Crop Editor/Open"));
+            Assert.That(SquareCropDefaults.MenuPath, Is.EqualTo("Tools/Square Crop Editor/メイン画面"));
             Assert.That(settings.OutputSize, Is.EqualTo(256));
             Assert.That(settings.CropAspectRatio, Is.EqualTo(AspectRatioSpec.Square));
             Assert.That(settings.OutputAspectRatio, Is.EqualTo(AspectRatioSpec.Square));

@@ -4,7 +4,7 @@ Unity Square Crop Editor is a Unity Editor extension for selecting a region of a
 
 ## MVP Scope
 
-- Open from `Tools > Square Crop Editor > Open`.
+- Open from `Tools > Square Crop Editor > メイン画面`.
 - Select one source image.
 - Drag one crop region constrained by square, preset aspect ratio, or custom numeric ratio.
 - Preview transparent PNG output.
@@ -25,6 +25,16 @@ Tests/
 ```
 
 Runtime code should stay deterministic and testable. Editor code should handle Unity menu integration, windows, asset selection, export, and AssetDatabase refresh.
+
+## Menu
+
+- `Tools > Square Crop Editor > メイン画面`
+- `Tools > Square Crop Editor > ライセンス`
+- `Tools > Square Crop Editor > バージョン情報`
+
+## License
+
+Unity Square Crop Editor is distributed under the MIT License. See `LICENSE.md`.
 
 ## User Documents
 

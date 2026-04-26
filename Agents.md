@@ -6,7 +6,7 @@
 - Repository: `unity-square-crop-editor`
 - Target: Unity Editor extension
 - Delivery target: UPM Git package and optional BOOTH distribution
-- Main menu path candidate: `Tools > Square Crop Editor > Open`
+- Main menu path candidate: `Tools > Square Crop Editor > メイン画面`
 
 ## Workflow
 

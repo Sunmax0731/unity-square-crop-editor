@@ -5,7 +5,7 @@ This sample contains a transparent PNG source image for manual smoke testing.
 ## Test Steps
 
 1. Import this sample from Unity Package Manager.
-2. Open `Tools > Square Crop Editor > Open`.
+2. Open `Tools > Square Crop Editor > メイン画面`.
 3. Assign `square-crop-sample.png` to `Source Image`.
 4. Drag a crop region around one of the colored shapes.
 5. Change `Output Ratio` and `Mapping`.

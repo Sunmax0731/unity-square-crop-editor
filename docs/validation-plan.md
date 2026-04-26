@@ -30,7 +30,7 @@ Out of MVP automated scope:
 ## Manual Smoke
 
 1. Open Unity project.
-2. Open `Tools > Square Crop Editor > Open`.
+2. Open `Tools > Square Crop Editor > メイン画面`.
 3. Select a PNG source image.
 4. Select crop aspect ratio: default square, then at least one non-square preset.
 5. Drag a region.

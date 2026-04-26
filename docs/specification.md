@@ -7,7 +7,7 @@ Unity Square Crop Editor
 ## 2. Menu
 
 ```text
-Tools > Square Crop Editor > Open
+Tools > Square Crop Editor > メイン画面
 ```
 
 ## 3. Crop Coordinate System
@@ -137,7 +137,7 @@ The initial implementation should behave as follows:
 Issue #3 can start from these fixed decisions:
 
 - package path: `Packages/com.sunmax0731.square-crop-editor`
-- menu path: `Tools > Square Crop Editor > Open`
+- menu path: `Tools > Square Crop Editor > メイン画面`
 - default output size: `256`
 - default crop aspect ratio: `1:1`
 - default output aspect ratio: `1:1`

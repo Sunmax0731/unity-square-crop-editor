@@ -17,7 +17,7 @@ $unity = 'C:\Program Files\Unity\6000.4.0f1\Editor\Unity.exe'
 
 ## Manual Smoke
 
-- [ ] Open `Tools > Square Crop Editor > Open`.
+- [ ] Open `Tools > Square Crop Editor > メイン画面`.
 - [ ] Assign a transparent PNG source texture.
 - [ ] Drag a square selection.
 - [ ] Drag a non-square preset selection.

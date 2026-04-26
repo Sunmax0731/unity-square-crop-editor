@@ -4,7 +4,7 @@ Unity Square Crop Editor is provided as an editor utility for Unity projects.
 
 ## Intended Use
 
-You may use the package to crop and export image assets in Unity projects, including commercial projects, subject to the license terms included with the repository or distribution package.
+You may use the package to crop and export image assets in Unity projects, including commercial projects, subject to the MIT License included with the repository or distribution package.
 
 ## Source Assets
 

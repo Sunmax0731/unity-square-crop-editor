@@ -39,7 +39,7 @@ Initial MVP release.
 
 ### Added
 
-- Editor window at `Tools > Square Crop Editor > Open`.
+- Editor window at `Tools > Square Crop Editor > メイン画面`.
 - Single source `Texture2D` selection.
 - Drag-based crop selection on the source preview.
 - Crop aspect ratio presets and custom ratio.

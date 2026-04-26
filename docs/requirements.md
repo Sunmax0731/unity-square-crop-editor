@@ -47,7 +47,7 @@ Excluded from `v0.1.0`:
 The user can open the tool from:
 
 ```text
-Tools > Square Crop Editor > Open
+Tools > Square Crop Editor > メイン画面
 ```
 
 ### RQ-002 Source Image Selection
