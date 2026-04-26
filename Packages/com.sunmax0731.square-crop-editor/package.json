@@ -1,7 +1,7 @@
 {
   "name": "com.sunmax0731.square-crop-editor",
   "displayName": "Unity Square Crop Editor",
-  "version": "0.3.1",
+  "version": "0.3.2",
   "unity": "6000.0",
   "description": "Unity Editor extension for drag-selecting a transparent image region and exporting it as an aspect-ratio PNG.",
   "keywords": [

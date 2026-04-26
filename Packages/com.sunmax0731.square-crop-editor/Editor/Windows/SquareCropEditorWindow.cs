@@ -14,7 +14,7 @@ namespace Sunmax0731.SquareCropEditor.Editor.Windows
     {
         public const string WindowTitle = "Square Crop Editor";
 
-        internal const string ToolVersion = "0.3.1";
+        internal const string ToolVersion = "0.3.2";
         private const float ControlPanelWidth = 300f;
         private const int MinPreviewHeight = 280;
         private const float PreviewScrollbarSize = 16f;

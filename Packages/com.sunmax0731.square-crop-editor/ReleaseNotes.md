@@ -1,5 +1,10 @@
 # Release Notes
 
+## v0.3.2
+
+- Fixed the Editor tests assembly definition so importing the package does not compile NUnit-based tests unless Unity test compilation is enabled.
+- Verified release package generation after the assembly definition fix.
+
 ## v0.3.1
 
 - Unity Editor menu entries are now standardized as `Tools > Square Crop Editor > メイン画面`, `ライセンス`, and `バージョン情報`.

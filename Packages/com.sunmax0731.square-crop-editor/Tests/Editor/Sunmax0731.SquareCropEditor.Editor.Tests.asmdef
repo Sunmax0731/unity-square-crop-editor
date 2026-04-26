@@ -3,7 +3,9 @@
   "rootNamespace": "Sunmax0731.SquareCropEditor.Tests.Editor",
   "references": [
     "Sunmax0731.SquareCropEditor.Runtime",
-    "Sunmax0731.SquareCropEditor.Editor"
+    "Sunmax0731.SquareCropEditor.Editor",
+    "UnityEditor.TestRunner",
+    "UnityEngine.TestRunner"
   ],
   "includePlatforms": [
     "Editor"
@@ -11,12 +13,13 @@
   "excludePlatforms": [],
   "allowUnsafeCode": false,
   "overrideReferences": false,
-  "precompiledReferences": [],
-  "autoReferenced": false,
-  "defineConstraints": [],
-  "versionDefines": [],
-  "optionalUnityReferences": [
-    "TestAssemblies"
+  "precompiledReferences": [
+    "nunit.framework.dll"
   ],
+  "autoReferenced": false,
+  "defineConstraints": [
+    "UNITY_INCLUDE_TESTS"
+  ],
+  "versionDefines": [],
   "noEngineReferences": false
 }
